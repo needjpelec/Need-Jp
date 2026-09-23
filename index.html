@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Need Jp Electronics - Premium Gadgets & Accessories</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-gold: #c59d5f;
+            --primary-dark: #111111;
+            --accent-red: #e60023;
+            --bg-light: #f4f6f8;
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 15px 35px rgba(197, 157, 95, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--bg-light); color: #222; }
+        a { text-decoration: none; color: inherit; }
+
+        /* Top Bar */
+        .top-bar { background: var(--primary-dark); color: #d1d1d1; padding: 10px 5%; display: flex; justify-content: space-between; align-items: center; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .top-bar-left, .top-bar-right { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .top-bar-right a, .top-bar-left a { color: #ccc; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+        .top-bar-right a:hover, .top-bar-left a:hover { color: var(--primary-gold); }
+
+        /* Header */
+        header { background: #ffffff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.04); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 26px; font-weight: 900; color: #111; letter-spacing: 1px; display: flex; align-items: center; }
+        .logo span { color: var(--primary-gold); margin-left: 5px; }
+
+        .scrolling-text-box { flex-grow: 1; overflow: hidden; background: #fdfaf6; border: 1px solid #ebd3b4; border-radius: 25px; padding: 8px 20px; margin: 0 20px; max-width: 550px; }
+        .scrolling-text-box marquee { font-size: 13px; font-weight: 600; color: #444; }
+
+        .header-icons { display: flex; gap: 20px; font-size: 20px; align-items: center; }
+        .header-icons a { position: relative; transition: transform 0.2s; color: #333; }
+        .header-icons a:hover { transform: scale(1.15); color: var(--primary-gold); }
+        .badge { position: absolute; top: -8px; right: -10px; background-color: var(--accent-red); color: white; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 50%; border: 2px solid #fff; }
+
+        /* Navigation */
+        nav { background: #fff; padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .nav-links a { margin-right: 25px; font-weight: 700; font-size: 13px; text-transform: uppercase; color: #444; letter-spacing: 1px; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary-gold); }
+
+        .search-container { display: flex; align-items: center; }
+        .search-input { padding: 8px 15px; border: 1.5px solid #ddd; border-radius: 20px; font-size: 13px; outline: none; width: 0; opacity: 0; transition: all 0.4s ease; }
+        .search-input.active { width: 180px; opacity: 1; margin-right: 8px; border-color: var(--primary-gold); }
+        .search-btn { cursor: pointer; font-size: 18px; color: #333; }
+
+        .announcement { background: linear-gradient(135deg, #111, #222); color: var(--primary-gold); text-align: center; padding: 10px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Container & Grid */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 15px; }
+        .section-title { background: linear-gradient(135deg, var(--primary-gold), #a37c41); color: #fff; padding: 10px 22px; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 30px; display: inline-block; border-radius: 30px; box-shadow: 0 4px 15px rgba(197, 157, 95, 0.3); }
+
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+
+        /* PRODUCT CARD */
+        .product-card { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            position: relative; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .product-card:hover { transform: translateY(-8px); box-shadow: var(--hover-shadow); }
+
+        .wishlist-icon { 
+            position: absolute; top: 12px; right: 12px; color: #888; cursor: pointer; z-index: 3; font-size: 16px; transition: all 0.3s; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(5px); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        }
+        .wishlist-icon:hover { transform: scale(1.15); background: #fff; color: var(--accent-red); }
+        .wishlist-icon.active { color: var(--accent-red); }
+
+        .product-tag { position: absolute; top: 12px; left: 12px; background: var(--primary-dark); color: var(--primary-gold); font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; z-index: 2; letter-spacing: 0.5px; border: 1px solid var(--primary-gold); }
+
+        .img-box-grid { width: 100%; height: 250px; overflow: hidden; background: #fafafa; cursor: pointer; position: relative; }
+        .img-box-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+        .product-card:hover .img-box-grid img { transform: scale(1.08); }
+
+        .product-info { padding: 18px; text-align: left; }
+        .product-category { font-size: 10px; color: #999; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px; display: block; }
+        .product-info h3 { font-size: 16px; color: #111; margin-bottom: 8px; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+        .product-info h3:hover { color: var(--primary-gold); }
+
+        .product-rating { color: #ffc107; font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+        .product-rating span { color: #888; font-size: 11px; margin-left: 4px; font-weight: 600; }
+
+        .product-price-wrapper { display: flex; align-items: center; justify-content: space-between; }
+        .product-price-tag { font-size: 20px; font-weight: 900; color: #111; }
+        
+        .stock-status { font-size: 10px; font-weight: 700; color: #2e7d32; background: #e8f5e9; padding: 3px 8px; border-radius: 12px; }
+        .stock-status.out-of-stock { color: #c62828; background: #ffebee; }
+
+        .button-group { display: flex; gap: 10px; padding: 0 18px 18px 18px; }
+        .btn-buy { background: var(--primary-dark); color: #fff; border: none; padding: 11px; flex: 1; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.3s; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; letter-spacing: 0.5px; }
+        .btn-view { background: #f0f0f0; color: #333; border: 1px solid #e0e0e0; padding: 11px; flex: 1; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.3s; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-buy:hover:not(:disabled) { background: var(--primary-gold); color: #fff; box-shadow: 0 4px 15px rgba(197, 157, 95, 0.4); }
+        .btn-view:hover { background: #e2e2e2; }
+
+        .btn-buy:disabled { background: #ccc !important; color: #666 !important; cursor: not-allowed; box-shadow: none !important; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 10000; padding: 15px; }
+        .modal-content { background: #fff; padding: 25px 30px; border-radius: 20px; width: 100%; max-width: 520px; position: relative; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalFadeIn 0.3s ease; }
+
+        @keyframes modalFadeIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 16px; cursor: pointer; color: #666; background: #f0f0f0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; z-index: 10; }
+        .close-btn:hover { background: var(--accent-red); color: #fff; }
+
+        .img-zoom-container { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 15px; cursor: zoom-in; }
+        .img-zoom-container img { width: 100%; max-height: 280px; object-fit: cover; transition: transform 0.3s ease; display: block; }
+        .img-zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 10px; pointer-events: none; }
+
+        #zoomOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 20000; justify-content: center; align-items: center; cursor: zoom-out; }
+        #zoomOverlay img { max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; color: #444; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper i { position: absolute; left: 14px; color: #888; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 12px 12px 38px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13px; outline: none; transition: 0.3s; background: #fafafa; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-gold); background: #fff; box-shadow: 0 0 0 4px rgba(197, 157, 95, 0.15); }
+
+        .payment-info-box { background-color: #fff8e1; border: 1px solid #ffe082; padding: 12px; border-radius: 8px; font-size: 12px; color: #5d4037; margin-bottom: 15px; line-height: 1.5; }
+
+        .price-breakdown { font-size: 12px; color: #555; }
+        .price-breakdown .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .price-breakdown .total-row { font-size: 15px; font-weight: 800; color: var(--primary-gold); border-top: 1px dashed #ccc; padding-top: 6px; margin-top: 6px; }
+
+        .btn-submit { background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; border: none; padding: 14px; width: 100%; font-weight: 800; font-size: 15px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); transition: 0.3s; }
+        .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5); }
+        .btn-submit:disabled { background: #ccc !important; cursor: not-allowed; box-shadow: none !important; }
+
+        .reviews-section { margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px; text-align: left; }
+        .reviews-section h3 { font-size: 15px; margin-bottom: 12px; color: #111; display: flex; align-items: center; gap: 8px; }
+        .review-card { background: #fdfdfd; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .review-author { font-weight: 700; font-size: 13px; color: #222; }
+        .review-stars { color: #ffc107; font-size: 11px; }
+        .review-text { font-size: 12px; color: #555; line-height: 1.4; }
+
+        .add-review-box { background: #fdfaf6; padding: 14px; border-radius: 12px; border: 1px dashed var(--primary-gold); margin-top: 15px; }
+        .star-rating-select { display: flex; gap: 6px; font-size: 18px; color: #ccc; cursor: pointer; margin: 6px 0 10px 0; }
+        .star-rating-select i.active { color: #ffc107; }
+
+        footer { background: var(--primary-dark); color: #aaa; padding: 30px 5%; margin-top: 60px; text-align: center; font-size: 13px; border-top: 3px solid var(--primary-gold); }
+
+        @media (max-width: 480px) {
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .img-box-grid { height: 170px; }
+            .product-info { padding: 12px; }
+            .product-info h3 { font-size: 13px; }
+            .product-price-tag { font-size: 16px; }
+            .button-group { padding: 0 12px 12px 12px; gap: 6px; }
+            .btn-buy, .btn-view { padding: 9px 4px; font-size: 10px; }
+            .modal-content { padding: 20px 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <a href="#contact"><i class="fa-solid fa-envelope" style="color:var(--primary-gold)"></i> Contact Us</a>
+        </div>
+        <div class="top-bar-right">
+            <a href="mailto:mdhayfajothussain38@gmail.com"><i class="fa-solid fa-envelope"></i> mdhayfajothussain38@gmail.com</a>
+            <a href="tel:+8801732274010"><i class="fa-solid fa-phone"></i> +8801732274010</a>
+            <a href="https://wa.me/8801747425457" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> +8801747425457</a>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <a href="index.html" class="logo">Need<span>Jp Electronics</span></a>
+        
+        <div class="scrolling-text-box">
+            <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+                ⚡ আসসালামু আলাইকুম! Need Jp Electronics-এ আপনাকে স্বাগতম • সরাসরি চায়না থেকে আমদানিকৃত প্রিমিয়াম গ্যাজেট ও অ্যাকসেসরিজ • জয়পুরহাট সদরে ক্যাশ অন ডেলিভারি ও ফ্রি ডেলিভারি সুবিধা ⚡
+            </marquee>
+        </div>
+
+        <div class="header-icons">
+            <a href="https://www.facebook.com/Need.Jp.To.China" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+            <a href="javascript:void(0)" onclick="openWishlistModal()">
+                <i class="fa-solid fa-heart" style="color:var(--accent-red)"></i>
+                <span class="badge" id="wishlistCount">0</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="#">GADGETS</a>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="প্রোডাক্ট খুঁজুন..." onkeyup="filterProducts()">
+            <i class="fa-solid fa-magnifying-glass search-btn" onclick="toggleSearch()"></i>
+        </div>
+    </nav>
+
+    <div class="announcement">
+        🔥 EXCLUSIVE GADGET SALE! JOYPURHAT SODOR FREE DELIVERY • CASH ON DELIVERY AVAILABLE 🔥
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="section-title"><i class="fa-solid fa-microchip"></i> LATEST ELECTRONICS & GADGETS</div>
+        <div class="product-grid" id="productGrid">
+            <p style="grid-column: 1/-1; text-align: center; color: #777; padding: 40px 0;">প্রোডাক্ট লোড হচ্ছে...</p>
+        </div>
+    </div>
+
+    <!-- Details & Reviews Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDetails()">&times;</span>
+            <div style="text-align: center;">
+                <div class="img-zoom-container" onclick="openFullscreenZoom()">
+                    <img id="dImg" src="" alt="Product Image">
+                    <div class="img-zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> জুম করতে ক্লিক করুন</div>
+                </div>
+                
+                <h2 id="dTitle" style="font-size:18px; color:#111;"></h2>
+                <div id="dPrice" style="font-size:22px; font-weight:800; color:var(--primary-gold); margin:6px 0 12px 0;"></div>
+                <div id="dDesc" style="text-align:left; background:#f9f9f9; padding:12px; border-radius:8px; font-size:13px; color:#555; border:1px solid #eee; margin-bottom:15px; white-space:pre-line;"></div>
+                <button class="btn-submit" id="dBuyBtn" onclick="buyFromDetails()"><i class="fa-brands fa-whatsapp"></i> এখনই অর্ডার করুন (BUY NOW)</button>
+            </div>
+
+            <!-- Customer Reviews -->
+            <div class="reviews-section">
+                <h3><i class="fa-solid fa-comments" style="color:var(--primary-gold);"></i> কাস্টমার রিভিউ (Customer Reviews)</h3>
+                <div id="reviewsList"></div>
+
+                <div class="add-review-box">
+                    <h4 style="font-size:12px; font-weight:700; color:#333;">আপনার মতামত দিন:</h4>
+                    <div class="star-rating-select" id="starSelector">
+                        <i class="fa-solid fa-star active" onclick="setRating(1)"></i>
+                        <i class="fa-solid fa-star active" onclick="setRating(2)"></i>
+                        <i class="fa-solid fa-star active" onclick="setRating(3)"></i>
+                        <i class="fa-solid fa-star active" onclick="setRating(4)"></i>
+                        <i class="fa-solid fa-star active" onclick="setRating(5)"></i>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <input type="text" id="revName" placeholder="আপনার নাম..." style="padding:8px 12px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <textarea id="revComment" rows="2" placeholder="প্রোডাক্ট সম্পর্কে লিখুন..." style="padding:8px 12px;"></textarea>
+                    </div>
+                    <button type="button" onclick="submitReview()" style="background:var(--primary-dark); color:#fff; border:none; padding:8px 15px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">রিভিউ দিন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Zoom Overlay -->
+    <div id="zoomOverlay" onclick="closeFullscreenZoom()">
+        <img id="zoomImg" src="" alt="Zoomed Product Image">
+    </div>
+
+    <!-- Dynamic Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCheckout()">&times;</span>
+            <div style="text-align:center; margin-bottom:18px;">
+                <h2 style="font-size:20px; font-weight:800;"><i class="fa-solid fa-bag-shopping" style="color:var(--primary-gold)"></i> দ্রুত অর্ডার কনফার্ম করুন</h2>
+                <p id="checkoutSubtitle" style="font-size:12px; color:#666; margin-top:4px;">অর্ডার করতে নিচের সঠিক তথ্যগুলো প্রদান করুন</p>
+            </div>
+
+            <div style="background:#fdfaf6; border:1px dashed var(--primary-gold); padding:12px 15px; border-radius:10px; margin-bottom:18px;">
+                <div style="font-size:10px; color:#888; font-weight:700; margin-bottom:4px;">SELECTED PRODUCT</div>
+                <div id="displayPName" style="font-size:14px; font-weight:700; margin-bottom:8px;">-</div>
+                
+                <div class="price-breakdown">
+                    <div class="row">
+                        <span>প্রোডাক্টের মূল্য:</span>
+                        <span id="summaryProductPrice">৳0</span>
+                    </div>
+                    <div class="row">
+                        <span>ডেলিভারি চার্জ:</span>
+                        <span id="summaryDeliveryCharge">৳0</span>
+                    </div>
+                    <div class="row total-row">
+                        <span>সর্বমোট (Total):</span>
+                        <span id="displayPPrice">৳0</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="orderForm">
+                <div class="form-group">
+                    <label>আপনার নাম *</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-user"></i><input type="text" id="cName" required placeholder="আপনার পুরো নাম লিখুন"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>মোবাইল নম্বর *</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-phone"></i><input type="tel" id="cPhone" required placeholder="017XXXXXXXX"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>ডেলিভারি এরিয়া (Delivery Location) *</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-truck-ramps"></i>
+                        <select id="deliveryArea" onchange="calculateTotal()">
+                            <option value="Joypurhat" selected>জয়পুরহাট সদর (ফ্রি ডেলিভারি - ৳0)</option>
+                            <option value="Outside">জয়পুরহাটের বাইরে / সমগ্র বাংলাদেশ (৳১২০)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>পূর্ণাঙ্গ ঠিকানা *</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-location-dot" style="top:14px;"></i><textarea id="cAddress" rows="2" required placeholder="জেলা, থানা, বাসা বা এলাকার নাম..."></textarea></div>
+                </div>
+
+                <div class="form-group">
+                    <label>পেমেন্ট মাধ্যম</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-wallet"></i>
+                        <select id="pMethod" onchange="togglePaymentFields()">
+                            <option value="Cash on Delivery">Cash on Delivery (ক্যাশ অন ডেলিভারি)</option>
+                            <option value="bKash (Personal)">bKash (বিকাশ)</option>
+                            <option value="Nagad (Personal)">Nagad (নগদ)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="paymentDetailsSection" style="display: none;">
+                    <div class="payment-info-box" id="paymentNotice"></div>
+                    <div class="form-group">
+                        <label id="trxLabel">ট্রানজেকশন আইডি (TrxID) *</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-receipt"></i>
+                            <input type="text" id="cTrxID" placeholder="যেমন: 9J38X4L0">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-submit" onclick="sendOrder()"><i class="fa-brands fa-whatsapp"></i> হোয়াটসঅ্যাপে অর্ডার কনফার্ম করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wishlist Modal -->
+    <div id="wishlistModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeWishlistModal()">&times;</span>
+            <h2 style="margin-bottom:15px; font-size:18px; text-align:center;"><i class="fa-solid fa-heart" style="color:var(--accent-red)"></i> আপনার পছন্দনীয় প্রোডাক্টস</h2>
+            <div id="wishlistContainer"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <p>Contact Us: mdhayfajothussain38@gmail.com | Phone: +8801732274010</p>
+        <p style="margin-top:5px;">&copy; 2026 Need Jp Electronics. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Firebase Configuration & JavaScript -->
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyAyvwU9znCjByCZ_UZveWo8m-9EDvDiHJk",
+          authDomain: "needjp-store.firebaseapp.com",
+          projectId: "needjp-store",
+          storageBucket: "needjp-store.firebasestorage.app",
+          messagingSenderId: "1876371529444",
+          appId: "1:1876371529444:web:9ab84f1af05e79b04756f1",
+          measurementId: "G-DJY5MQCEGP"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let selectedProduct = '', selectedPrice = 0, currentProductId = '', currentRating = 5, currentProductStock = true;
+        let deliveryCharge = 0, totalPrice = 0;
+        let wishlist = JSON.parse(localStorage.getItem('needjp_wishlist')) || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProductsFromFirebase();
+            updateWishlistUI();
+        });
+
+        function loadProductsFromFirebase() {
+            const grid = document.getElementById('productGrid');
+            db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                grid.innerHTML = '';
+                if (snapshot.empty) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #777; padding: 40px 0;">কোনো ইলেকট্রনিক্স প্রোডাক্ট পাওয়া যায়নি।</p>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const p = doc.data();
+                    const id = doc.id;
+                    const isStock = p.inStock !== false;
+                    const safeTitle = p.title ? p.title.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+                    const safeDesc = p.description ? p.description.replace(/'/g, "\\'").replace(/\n/g, "\\n") : '';
+
+                    const avgRating = p.avgRating || 5;
+                    let starsHTML = '';
+                    for (let i = 1; i <= 5; i++) {
+                        starsHTML += `<i class="fa-${i <= Math.round(avgRating) ? 'solid' : 'regular'} fa-star"></i>`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.setAttribute('data-id', id);
+
+                    card.innerHTML = `
+                        <div class="product-tag">HOT</div>
+                        <div class="wishlist-icon ${wishlist.some(item => item.id === id) ? 'active' : ''}" onclick="toggleWishlist('${id}', '${safeTitle}', ${p.price}, '${p.image}', this)">
+                            <i class="fa-${wishlist.some(item => item.id === id) ? 'solid' : 'regular'} fa-heart"></i>
+                        </div>
+                        <div class="img-box-grid" onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">
+                            <img src="${p.image}" alt="${p.title}">
+                        </div>
+                        <div class="product-info">
+                            <span class="product-category">ELECTRONICS & GADGETS</span>
+                            <h3 onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">${p.title}</h3>
+                            <div class="product-rating">
+                                ${starsHTML}
+                                <span>(${p.totalReviews || 1})</span>
+                            </div>
+                            <div class="product-price-wrapper">
+                                <div class="product-price-tag">৳${p.price}</div>
+                                <span class="stock-status ${isStock ? '' : 'out-of-stock'}">${isStock ? 'In Stock' : 'Stock Out'}</span>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn-buy" ${isStock ? '' : 'disabled'} onclick="openCheckout('${safeTitle}', ${p.price})">
+                                <i class="fa-solid fa-bag-shopping"></i> ${isStock ? 'BUY NOW' : 'STOCK OUT'}
+                            </button>
+                            <button class="btn-view" onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">
+                                <i class="fa-solid fa-eye"></i> VIEW
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                updateWishlistUI();
+            });
+        }
+
+        /* Modal Functions */
+        function openDetails(id, title, price, img, desc, isStock = true) {
+            currentProductId = id;
+            currentProductStock = isStock;
+            document.getElementById('dTitle').innerText = title;
+            document.getElementById('dPrice').innerText = '৳' + price;
+            document.getElementById('dImg').src = img;
+            document.getElementById('dDesc').innerText = desc || 'কোনো বিবরণ দেওয়া হয়নি।';
+            
+            const buyBtn = document.getElementById('dBuyBtn');
+            if(!isStock) {
+                buyBtn.disabled = true;
+                buyBtn.innerHTML = '<i class="fa-solid fa-ban"></i> STOCK OUT';
+            } else {
+                buyBtn.disabled = false;
+                buyBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> এখনই অর্ডার করুন (BUY NOW)';
+            }
+
+            document.getElementById('detailsModal').style.display = 'flex';
+            loadReviews(id);
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        function buyFromDetails() {
+            if(!currentProductStock) return alert('দুঃখিত, এই প্রোডাক্টটি বর্তমানে স্টক আউট!');
+            const title = document.getElementById('dTitle').innerText;
+            const price = Number(document.getElementById('dPrice').innerText.replace('৳', ''));
+            closeDetails();
+            openCheckout(title, price);
+        }
+
+        function openCheckout(title, price) {
+            selectedProduct = title;
+            selectedPrice = price;
+            document.getElementById('displayPName').innerText = title;
+            calculateTotal();
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
+
+        /* Image Zoom Functions */
+        function openFullscreenZoom() {
+            const imgSrc = document.getElementById('dImg').src;
+            if (imgSrc) {
+                document.getElementById('zoomImg').src = imgSrc;
+                document.getElementById('zoomOverlay').style.display = 'flex';
+            }
+        }
+        function closeFullscreenZoom() {
+            document.getElementById('zoomOverlay').style.display = 'none';
+        }
+
+        /* Calculate Total Price with Delivery Charge */
+        function calculateTotal() {
+            const area = document.getElementById('deliveryArea').value;
+            if (area === 'Outside') {
+                deliveryCharge = 120;
+            } else {
+                deliveryCharge = 0;
+            }
+
+            totalPrice = selectedPrice + deliveryCharge;
+
+            document.getElementById('summaryProductPrice').innerText = '৳' + selectedPrice;
+            document.getElementById('summaryDeliveryCharge').innerText = '৳' + deliveryCharge;
+            document.getElementById('displayPPrice').innerText = '৳' + totalPrice;
+        }
+
+        /* Toggle Search Bar */
+        function toggleSearch() {
+            const input = document.getElementById('searchInput');
+            input.classList.toggle('active');
+            if(input.classList.contains('active')) input.focus();
+        }
+
+        function filterProducts() {
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                const title = card.querySelector('h3').innerText.toLowerCase();
+                card.style.display = title.includes(filter) ? 'flex' : 'none';
+            });
+        }
+
+        /* Payment Fields Handling */
+        function togglePaymentFields() {
+            const pMethod = document.getElementById('pMethod').value;
+            const sec = document.getElementById('paymentDetailsSection');
+            const notice = document.getElementById('paymentNotice');
+            
+            if (pMethod.includes('bKash') || pMethod.includes('Nagad')) {
+                sec.style.display = 'block';
+                notice.innerHTML = `<strong>${pMethod} পেমেন্ট নির্দেশিকা:</strong><br>আমাদের পার্সোনাল নম্বর <strong>+8801732274010</strong> এ <strong>৳${totalPrice}</strong> সেন্ড মানি করুন এবং নিচে ট্রানজেকশন আইডি (TrxID) প্রদান করুন।`;
+            } else {
+                sec.style.display = 'none';
+            }
+        }
+
+        /* Send WhatsApp Order */
+        function sendOrder() {
+            const name = document.getElementById('cName').value.trim();
+            const phone = document.getElementById('cPhone').value.trim();
+            const address = document.getElementById('cAddress').value.trim();
+            const area = document.getElementById('deliveryArea').options[document.getElementById('deliveryArea').selectedIndex].text;
+            const pMethod = document.getElementById('pMethod').value;
+            const trxID = document.getElementById('cTrxID').value.trim();
+
+            if (!name || !phone || !address) {
+                alert('অনুগ্রহ করে সকল প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন!');
+                return;
+            }
+
+            if ((pMethod.includes('bKash') || pMethod.includes('Nagad')) && !trxID) {
+                alert('অনুগ্রহ করে পেমেন্টের ট্রানজেকশন আইডি (TrxID) প্রদান করুন!');
+                return;
+            }
+
+            let msg = `🛍️ *NEW GADGET ORDER - NEED JP ELECTRONICS*\n\n`;
+            msg += `📦 *প্রোডাক্ট:* ${selectedProduct}\n`;
+            msg += `💵 *মূল্য:* ৳${selectedPrice}\n`;
+            msg += `🚚 *ডেলিভারি চার্জ:* ৳${deliveryCharge}\n`;
+            msg += `💰 *সর্বমোট:* ৳${totalPrice}\n\n`;
+            msg += `👤 *কাস্টমার নাম:* ${name}\n`;
+            msg += `📞 *মোবাইল:* ${phone}\n`;
+            msg += `📍 *ঠিকানা:* ${address}\n`;
+            msg += `🚛 *এলাকা:* ${area}\n`;
+            msg += `💳 *পেমেন্ট মেথড:* ${pMethod}\n`;
+            if (trxID) msg += `🧾 *TrxID:* ${trxID}\n`;
+
+            const whatsappURL = `https://wa.me/8801747425457?text=${encodeURIComponent(msg)}`;
+            window.open(whatsappURL, '_blank');
+            closeCheckout();
+        }
+
+        /* Wishlist Logic */
+        function toggleWishlist(id, title, price, image, el) {
+            const index = wishlist.findIndex(item => item.id === id);
+            if (index > -1) {
+                wishlist.splice(index, 1);
+            } else {
+                wishlist.push({ id, title, price, image });
+            }
+            localStorage.setItem('needjp_wishlist', JSON.stringify(wishlist));
+            updateWishlistUI();
+        }
+
+        function updateWishlistUI() {
+            document.getElementById('wishlistCount').innerText = wishlist.length;
+        }
+
+        function openWishlistModal() {
+            const container = document.getElementById('wishlistContainer');
+            container.innerHTML = '';
+            if (wishlist.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#777;">আপনার উইশলিস্ট খালি!</p>';
+            } else {
+                wishlist.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:8px; border:1px solid #eee; border-radius:8px;';
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${item.image}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
+                            <div>
+                                <div style="font-size:12px; font-weight:bold;">${item.title}</div>
+                                <div style="font-size:12px; color:var(--primary-gold);">৳${item.price}</div>
+                            </div>
+                        </div>
+                        <button onclick="toggleWishlist('${item.id}'); openWishlistModal();" style="border:none; background:none; color:red; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+            document.getElementById('wishlistModal').style.display = 'flex';
+        }
+
+        function closeWishlistModal() {
+            document.getElementById('wishlistModal').style.display = 'none';
+        }
+
+        /* Review Functions */
+        function setRating(r) {
+            currentRating = r;
+            const stars = document.querySelectorAll('#starSelector i');
+            stars.forEach((s, idx) => {
+                if (idx < r) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        }
+
+        function loadReviews(pId) {
+            const list = document.getElementById('reviewsList');
+            list.innerHTML = '<p style="font-size:11px; color:#888;">রিভিউ লোড হচ্ছে...</p>';
+            db.collection('products').doc(pId).collection('reviews').orderBy('createdAt', 'desc').get().then(snapshot => {
+                list.innerHTML = '';
+                if (snapshot.empty) {
+                    list.innerHTML = '<p style="font-size:11px; color:#888;">এখনো কোনো রিভিউ দেওয়া হয়নি।</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const r = doc.data();
+                    let s = '';
+                    for (let i = 1; i <= 5; i++) s += `<i class="fa-${i <= r.rating ? 'solid' : 'regular'} fa-star"></i>`;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'review-card';
+                    div.innerHTML = `
+                        <div class="review-header">
+                            <span class="review-author">${r.name}</span>
+                            <span class="review-stars">${s}</span>
+                        </div>
+                        <div class="review-text">${r.comment}</div>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function submitReview() {
+            const name = document.getElementById('revName').value.trim();
+            const comment = document.getElementById('revComment').value.trim();
+            if (!name || !comment) return alert('অনুগ্রহ করে নাম এবং মতামত লিখুন!');
+
+            db.collection('products').doc(currentProductId).collection('reviews').add({
+                name,
+                comment,
+                rating: currentRating,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById('revName').value = '';
+                document.getElementById('revComment').value = '';
+                loadReviews(currentProductId);
+                alert('ধন্যবাদ! আপনার রিভিউটি সফলভাবে পোস্ট হয়েছে।');
+            });
+        }
+    </script>
+</body>
+</html>
