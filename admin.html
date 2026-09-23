@@ -5,47 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NeedJp Electronics - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --primary-gold: #c59d5f; --primary-dark: #111111; --accent-red: #e60023; --bg-light: #f4f6f8; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
-        body { background: var(--bg-light); color: #222; padding: 70px 12px 30px; }
-        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--primary-dark); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 2px solid var(--primary-gold); }
-        header h1 { font-size: 16px; color: var(--primary-gold); }
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,17,17,0.95); display: flex; justify-content: center; align-items: center; z-index: 99999; padding: 20px; }
-        .login-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border-top: 5px solid var(--primary-gold); }
-        .admin-container { max-width: 600px; margin: 0 auto; display: none; }
-        .card { background: #fff; padding: 18px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 20px; }
+        :root {
+            --neon-cyan: #00e5ff;
+            --neon-violet: #7b2ff7;
+            --neon-gradient: linear-gradient(135deg, var(--neon-cyan), var(--neon-violet));
+            --bg-deep: #070b14;
+            --bg-panel: #0e1420;
+            --bg-card: #121a2b;
+            --border-soft: rgba(0, 229, 255, 0.18);
+            --accent-red: #ff2d55;
+            --text-main: #e8edf6;
+            --text-dim: #8b98b0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', -apple-system, sans-serif; }
+        body { background: var(--bg-deep); color: var(--text-main); padding: 70px 12px 30px; }
+        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #05070d; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 1px solid var(--border-soft); }
+        header h1 { font-family: 'Orbitron', sans-serif; font-size: 15px; color: var(--neon-cyan); letter-spacing: 0.5px; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 30%, #101830 0%, #05070d 70%); display: flex; justify-content: center; align-items: center; z-index: 99999; padding: 20px; }
+        .login-card { background: var(--bg-panel); padding: 28px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border: 1px solid var(--border-soft); box-shadow: 0 0 40px rgba(0,229,255,0.1); }
+        .login-card h2 { font-family: 'Orbitron', sans-serif; font-size: 16px; color: var(--text-main); }
+        .admin-container { max-width: 640px; margin: 0 auto; display: none; }
+        .card { background: var(--bg-panel); padding: 18px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid var(--border-soft); }
+        .card h2 { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--neon-cyan); margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase; }
         .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; }
-        .btn-submit { background: var(--primary-dark); color: var(--primary-gold); border: 1px solid var(--primary-gold); padding: 14px; font-weight: 700; border-radius: 12px; cursor: pointer; width: 100%; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: var(--text-dim); }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 16px; outline: none; background: var(--bg-card); color: var(--text-main); }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,229,255,0.12); }
+        .btn-submit { background: var(--neon-gradient); color: #05070d; border: none; padding: 14px; font-weight: 800; border-radius: 12px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
         .preview-box { margin-top: 10px; display: none; text-align: center; }
-        .preview-box img { max-width: 120px; border-radius: 10px; }
+        .preview-box img { max-width: 120px; border-radius: 10px; border: 1px solid var(--border-soft); }
 
         .search-box { position: relative; margin-bottom: 15px; }
-        .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; }
-        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888; font-size: 14px; }
+        .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 14px; outline: none; background: var(--bg-card); color: var(--text-main); }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 14px; }
 
-        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; gap: 8px; }
+        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-soft); gap: 8px; }
         .product-info { display: flex; align-items: center; gap: 10px; flex: 1; }
-        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
-        .product-details strong { display: block; font-size: 13px; }
-        .product-details span { color: var(--primary-gold); font-size: 12px; font-weight: bold; }
+        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-soft); }
+        .product-details strong { display: block; font-size: 13px; color: var(--text-main); }
+        .product-details span { color: var(--neon-cyan); font-size: 12px; font-weight: bold; }
 
         .actions { display: flex; gap: 6px; align-items: center; }
         .btn-stock { border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .btn-in-stock { background: #e8f5e9; color: #2e7d32; }
-        .btn-out-stock { background: #fff3e0; color: #ef6c00; }
-        .btn-delete { background: #ffebee; color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-in-stock { background: rgba(46,230,166,0.15); color: #2ee6a6; }
+        .btn-out-stock { background: rgba(255,140,0,0.15); color: #ff9d3d; }
+        .btn-delete { background: rgba(255,45,85,0.15); color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+
+        /* Orders */
+        .order-item { border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px; margin-bottom: 12px; background: var(--bg-card); }
+        .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
+        .order-product { font-weight: 700; font-size: 14px; color: var(--text-main); }
+        .order-total { font-family: 'Orbitron', sans-serif; font-weight: 800; color: var(--neon-cyan); font-size: 14px; white-space: nowrap; }
+        .order-details { font-size: 12.5px; color: var(--text-dim); line-height: 1.7; }
+        .order-details b { color: var(--text-main); }
+        .order-status { display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 12px; background: rgba(255,193,7,0.15); color: #ffc94d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .order-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-call { flex: 1; background: var(--bg-panel); color: var(--neon-cyan); border: 1px solid var(--border-soft); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-order-delete { flex: 1; background: rgba(255,45,85,0.12); color: var(--accent-red); border: 1px solid rgba(255,45,85,0.35); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+        .tab-switch { display: flex; gap: 8px; margin-bottom: 18px; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; background: var(--bg-panel); border: 1px solid var(--border-soft); color: var(--text-dim); font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tab-btn.active { background: var(--neon-gradient); color: #05070d; border-color: transparent; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="login-card">
-            <h2 style="margin-bottom:15px;"><i class="fa-solid fa-lock" style="color: var(--primary-gold);"></i> NeedJp Electronics Admin</h2>
+            <h2 style="margin-bottom:15px;"><i class="fa-solid fa-lock" style="color: var(--neon-cyan);"></i> NeedJp Electronics Admin</h2>
             <form id="adminLoginForm">
                 <div class="form-group"><input type="text" id="adminUser" placeholder="ইউজারনেম" required></div>
                 <div class="form-group"><input type="password" id="adminPass" placeholder="পাসওয়ার্ড" required></div>
@@ -56,30 +88,48 @@
 
     <div class="admin-container" id="adminContainer">
         <header>
-            <h1><i class="fa-solid fa-user-shield"></i> NeedJp Electronics Admin</h1>
-            <button style="background:none; border:none; color:#fff;" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i></button>
+            <h1><i class="fa-solid fa-microchip"></i> NEEDJP ELECTRONICS ADMIN</h1>
+            <button style="background:none; border:none; color:#fff; font-size:16px; cursor:pointer;" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i></button>
         </header>
 
-        <div class="card">
-            <h2>নতুন প্রোডাক্ট যোগ করুন</h2>
-            <form id="addProductForm">
-                <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="pTitle" required></div>
-                <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="pPrice" required></div>
-                <div class="form-group"><label>ছবি নির্বাচন করুন *</label><input type="file" id="pImgFile" accept="image/*" onchange="handleImageCompress(event)"></div>
-                <div class="form-group"><label>অথবা ছবির URL দিন</label><input type="url" id="pImgUrl" onchange="previewUrlImage()"></div>
-                <div class="preview-box" id="previewBox"><img id="imgPreview" src=""></div>
-                <div class="form-group"><label>বিবরণ</label><textarea id="pDesc" rows="3"></textarea></div>
-                <button type="submit" class="btn-submit" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> আপলোড করুন</button>
-            </form>
+        <div class="tab-switch">
+            <button class="tab-btn active" id="tabProductsBtn" onclick="switchTab('products')"><i class="fa-solid fa-box"></i> প্রোডাক্ট</button>
+            <button class="tab-btn" id="tabOrdersBtn" onclick="switchTab('orders')"><i class="fa-solid fa-receipt"></i> অর্ডার <span id="orderCountBadge" style="background:var(--accent-red); color:#fff; border-radius:10px; padding:1px 7px; font-size:10px; margin-left:4px;"></span></button>
         </div>
 
-        <div class="card">
-            <h2>প্রোডাক্ট তালিকা ও স্টক ম্যানেজমেন্ট</h2>
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="adminSearchInput" placeholder="প্রোডাক্ট খুঁজুন..." oninput="filterAdminProducts()">
+        <div id="productsTab">
+            <div class="card">
+                <h2>নতুন প্রোডাক্ট যোগ করুন</h2>
+                <form id="addProductForm">
+                    <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="pTitle" required></div>
+                    <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="pPrice" required></div>
+                    <div class="form-group"><label>ছবি নির্বাচন করুন *</label><input type="file" id="pImgFile" accept="image/*" onchange="handleImageCompress(event)"></div>
+                    <div class="form-group"><label>অথবা ছবির URL দিন</label><input type="url" id="pImgUrl" onchange="previewUrlImage()"></div>
+                    <div class="preview-box" id="previewBox"><img id="imgPreview" src=""></div>
+                    <div class="form-group"><label>বিবরণ</label><textarea id="pDesc" rows="3"></textarea></div>
+                    <button type="submit" class="btn-submit" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> আপলোড করুন</button>
+                </form>
             </div>
-            <div id="adminProductList"></div>
+
+            <div class="card">
+                <h2>প্রোডাক্ট তালিকা ও স্টক ম্যানেজমেন্ট</h2>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="adminSearchInput" placeholder="প্রোডাক্ট খুঁজুন..." oninput="filterAdminProducts()">
+                </div>
+                <div id="adminProductList"></div>
+            </div>
+        </div>
+
+        <div id="ordersTab" style="display:none;">
+            <div class="card">
+                <h2>সকল অর্ডার</h2>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="orderSearchInput" placeholder="নাম, ফোন বা প্রোডাক্ট দিয়ে খুঁজুন..." oninput="filterOrders()">
+                </div>
+                <div id="ordersList"></div>
+            </div>
         </div>
     </div>
 
@@ -87,6 +137,7 @@
         const ADMIN_USER = "Needjpelec", ADMIN_PASS = "Elec@2025";
         let compressedBase64Image = "";
         let allProductsCache = [];
+        let allOrdersCache = [];
 
         const firebaseConfig = {
           apiKey: "AIzaSyDjXLiTltnnwuiuT3mKharRvliG_X7ia7w",
@@ -115,10 +166,19 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('adminContainer').style.display = 'block';
             loadAdminProducts();
+            loadOrders();
         }
 
         function logoutAdmin() { sessionStorage.removeItem('needjp_admin_logged'); location.reload(); }
 
+        function switchTab(tab) {
+            document.getElementById('productsTab').style.display = tab === 'products' ? 'block' : 'none';
+            document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
+            document.getElementById('tabProductsBtn').classList.toggle('active', tab === 'products');
+            document.getElementById('tabOrdersBtn').classList.toggle('active', tab === 'orders');
+        }
+
+        /* ---------- PRODUCTS ---------- */
         function handleImageCompress(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -180,7 +240,7 @@
             list.innerHTML = '';
 
             if (products.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#888; padding:15px; font-size:13px;">কোনো প্রোডাক্ট পাওয়া যায়নি!</p>';
+                list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:15px; font-size:13px;">কোনো প্রোডাক্ট পাওয়া যায়নি!</p>';
                 return;
             }
 
@@ -223,6 +283,70 @@
 
         function deleteProduct(id) {
             if(confirm('ডিলিট করতে চান?')) db.collection('products').doc(id).delete();
+        }
+
+        /* ---------- ORDERS ---------- */
+        function loadOrders() {
+            db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                allOrdersCache = [];
+                snapshot.forEach(doc => {
+                    allOrdersCache.push({ id: doc.id, ...doc.data() });
+                });
+                document.getElementById('orderCountBadge').innerText = allOrdersCache.length > 0 ? allOrdersCache.length : '';
+                renderOrders(allOrdersCache);
+            });
+        }
+
+        function renderOrders(orders) {
+            const list = document.getElementById('ordersList');
+            list.innerHTML = '';
+
+            if (orders.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:15px; font-size:13px;">এখনো কোনো অর্ডার আসেনি।</p>';
+                return;
+            }
+
+            orders.forEach(o => {
+                const div = document.createElement('div');
+                div.className = 'order-item';
+                const time = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleString('bn-BD') : '';
+                div.innerHTML = `
+                    <span class="order-status">${o.status || 'Pending'}</span>
+                    <div class="order-top">
+                        <span class="order-product"><i class="fa-solid fa-box"></i> ${o.product || '-'}</span>
+                        <span class="order-total">৳${o.total || 0}</span>
+                    </div>
+                    <div class="order-details">
+                        <div><b>কাস্টমার:</b> ${o.customerName || '-'}</div>
+                        <div><b>মোবাইল:</b> ${o.customerPhone || '-'}</div>
+                        <div><b>ঠিকানা:</b> ${o.customerAddress || '-'}</div>
+                        <div><b>ডেলিভারি:</b> ${o.deliveryArea || '-'}</div>
+                        <div><b>পেমেন্ট:</b> ${o.paymentMethod || '-'} ${o.trxId ? '(TrxID: ' + o.trxId + ')' : ''}</div>
+                        ${time ? `<div><b>সময়:</b> ${time}</div>` : ''}
+                    </div>
+                    <div class="order-actions">
+                        <a class="btn-call" href="tel:${o.customerPhone || ''}"><i class="fa-solid fa-phone"></i> কল করুন</a>
+                        <button class="btn-order-delete" onclick="deleteOrder('${o.id}')"><i class="fa-solid fa-trash"></i> ডিলিট (ডেলিভারড)</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function filterOrders() {
+            const query = document.getElementById('orderSearchInput').value.toLowerCase().trim();
+            const filtered = allOrdersCache.filter(o =>
+                (o.customerName || '').toLowerCase().includes(query) ||
+                (o.customerPhone || '').toLowerCase().includes(query) ||
+                (o.product || '').toLowerCase().includes(query)
+            );
+            renderOrders(filtered);
+        }
+
+        function deleteOrder(id) {
+            if (confirm('অর্ডারটি ডেলিভারি সম্পন্ন হয়ে গেছে এবং লিস্ট থেকে ডিলিট করতে চান?')) {
+                db.collection('orders').doc(id).delete();
+            }
         }
     </script>
 </body>
