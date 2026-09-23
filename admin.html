@@ -25,7 +25,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', -apple-system, sans-serif; }
         body { background: var(--bg-deep); color: var(--text-main); padding: 70px 12px 30px; }
         header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #05070d; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 1px solid var(--border-soft); }
-        header h1 { font-family: 'Orbitron', sans-serif; font-size: 15px; color: var(--neon-cyan); letter-spacing: 0.5px; }
+        header h1 { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--neon-cyan); letter-spacing: 0.5px; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 30%, #101830 0%, #05070d 70%); display: flex; justify-content: center; align-items: center; z-index: 99999; padding: 20px; }
         .login-card { background: var(--bg-panel); padding: 28px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border: 1px solid var(--border-soft); box-shadow: 0 0 40px rgba(0,229,255,0.1); }
         .login-card h2 { font-family: 'Orbitron', sans-serif; font-size: 16px; color: var(--text-main); }
@@ -34,8 +34,8 @@
         .card h2 { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--neon-cyan); margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase; }
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: var(--text-dim); }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 16px; outline: none; background: var(--bg-card); color: var(--text-main); }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,229,255,0.12); }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 15px; outline: none; background: var(--bg-card); color: var(--text-main); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,229,255,0.12); }
         .btn-submit { background: var(--neon-gradient); color: #05070d; border: none; padding: 14px; font-weight: 800; border-radius: 12px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
         .preview-box { margin-top: 10px; display: none; text-align: center; }
         .preview-box img { max-width: 120px; border-radius: 10px; border: 1px solid var(--border-soft); }
@@ -61,16 +61,28 @@
         .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
         .order-product { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .order-total { font-family: 'Orbitron', sans-serif; font-weight: 800; color: var(--neon-cyan); font-size: 14px; white-space: nowrap; }
-        .order-details { font-size: 12.5px; color: var(--text-dim); line-height: 1.7; }
+        .order-details { font-size: 12.5px; color: var(--text-dim); line-height: 1.7; margin-bottom: 10px; }
         .order-details b { color: var(--text-main); }
-        .order-status { display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 12px; background: rgba(255,193,7,0.15); color: #ffc94d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .order-status-badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 12px; background: rgba(255,193,7,0.15); color: #ffc94d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .order-edit { border-top: 1px dashed var(--border-soft); padding-top: 10px; margin-top: 6px; }
+        .order-edit .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .order-edit input, .order-edit select { width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-soft); border-radius: 8px; font-size: 13px; background: var(--bg-panel); color: var(--text-main); outline: none; }
+        .order-edit input:focus, .order-edit select:focus { border-color: var(--neon-cyan); }
+        .order-edit label { font-size: 10.5px; color: var(--text-dim); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
         .order-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-call { flex: 1; background: var(--bg-panel); color: var(--neon-cyan); border: 1px solid var(--border-soft); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-order-delete { flex: 1; background: rgba(255,45,85,0.12); color: var(--accent-red); border: 1px solid rgba(255,45,85,0.35); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-call { flex: 1; background: var(--bg-panel); color: var(--neon-cyan); border: 1px solid var(--border-soft); padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-update { flex: 1; background: var(--neon-gradient); color: #05070d; border: none; padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-order-delete { flex: 1; background: rgba(255,45,85,0.12); color: var(--accent-red); border: 1px solid rgba(255,45,85,0.35); padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
         .tab-switch { display: flex; gap: 8px; margin-bottom: 18px; }
-        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; background: var(--bg-panel); border: 1px solid var(--border-soft); color: var(--text-dim); font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; background: var(--bg-panel); border: 1px solid var(--border-soft); color: var(--text-dim); font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; position: relative; }
         .tab-btn.active { background: var(--neon-gradient); color: #05070d; border-color: transparent; }
+
+        @keyframes flashGlow { 0%, 100% { box-shadow: 0 0 0 rgba(255,45,85,0); } 50% { box-shadow: 0 0 18px rgba(255,45,85,0.85); } }
+        .tab-btn.flash { animation: flashGlow 0.7s ease-in-out 4; }
+
+        .notice-banner { background: rgba(0,229,255,0.08); border: 1px solid var(--border-soft); color: var(--text-dim); padding: 10px 14px; border-radius: 10px; font-size: 11.5px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .notice-banner b { color: var(--neon-cyan); }
     </style>
 </head>
 <body>
@@ -91,6 +103,11 @@
             <h1><i class="fa-solid fa-microchip"></i> NEEDJP ELECTRONICS ADMIN</h1>
             <button style="background:none; border:none; color:#fff; font-size:16px; cursor:pointer;" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i></button>
         </header>
+
+        <div class="notice-banner">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>নতুন অর্ডার এলে এই পেজ খোলা থাকা অবস্থায় সাউন্ড ও নোটিফিকেশন পাবেন। ব্রাউজার নোটিফিকেশন চালু করতে উপরে অনুমতি দিন (<b>Allow</b>)।</span>
+        </div>
 
         <div class="tab-switch">
             <button class="tab-btn active" id="tabProductsBtn" onclick="switchTab('products')"><i class="fa-solid fa-box"></i> প্রোডাক্ট</button>
@@ -133,11 +150,29 @@
         </div>
     </div>
 
+    <datalist id="deliveryServices">
+        <option value="Pathao">
+        <option value="Steadfast">
+        <option value="RedX">
+        <option value="eCourier">
+        <option value="নিজস্ব রাইডার">
+    </datalist>
+
     <script>
         const ADMIN_USER = "Needjpelec", ADMIN_PASS = "Elec@2025";
         let compressedBase64Image = "";
         let allProductsCache = [];
         let allOrdersCache = [];
+        let isFirstOrdersSnapshot = true;
+
+        const ORDER_STATUS_OPTIONS = [
+            { value: 'Pending', label: 'Pending - অর্ডার প্লেসড' },
+            { value: 'Confirmed', label: 'Confirmed - কনফার্মড' },
+            { value: 'Picked Up', label: 'Picked Up - পিকড আপ' },
+            { value: 'Out for Delivery', label: 'Out for Delivery - ডেলিভারিতে যাচ্ছে' },
+            { value: 'Delivered', label: 'Delivered - ডেলিভারড' },
+            { value: 'Cancelled', label: 'Cancelled - বাতিল' }
+        ];
 
         const firebaseConfig = {
           apiKey: "AIzaSyDjXLiTltnnwuiuT3mKharRvliG_X7ia7w",
@@ -165,6 +200,11 @@
         function showAdminDashboard() {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('adminContainer').style.display = 'block';
+
+            if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+
             loadAdminProducts();
             loadOrders();
         }
@@ -176,6 +216,34 @@
             document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
             document.getElementById('tabProductsBtn').classList.toggle('active', tab === 'products');
             document.getElementById('tabOrdersBtn').classList.toggle('active', tab === 'orders');
+        }
+
+        /* ---------- NEW ORDER NOTIFICATION (sound + browser notification) ---------- */
+        function playNotificationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(880, ctx.currentTime);
+                o.frequency.setValueAtTime(1180, ctx.currentTime + 0.15);
+                g.gain.setValueAtTime(0.18, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(); o.stop(ctx.currentTime + 0.5);
+            } catch (e) { console.log('sound error', e); }
+        }
+
+        function notifyNewOrder(data) {
+            playNotificationSound();
+            if (window.Notification && Notification.permission === 'granted') {
+                new Notification('🛍️ নতুন অর্ডার এসেছে!', {
+                    body: `${data.product || 'প্রোডাক্ট'} — ৳${data.total || 0} — ${data.customerName || ''}`
+                });
+            }
+            const btn = document.getElementById('tabOrdersBtn');
+            btn.classList.add('flash');
+            setTimeout(() => btn.classList.remove('flash'), 3000);
         }
 
         /* ---------- PRODUCTS ---------- */
@@ -292,9 +360,25 @@
                 snapshot.forEach(doc => {
                     allOrdersCache.push({ id: doc.id, ...doc.data() });
                 });
+
+                if (!isFirstOrdersSnapshot) {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            notifyNewOrder(change.doc.data());
+                        }
+                    });
+                }
+                isFirstOrdersSnapshot = false;
+
                 document.getElementById('orderCountBadge').innerText = allOrdersCache.length > 0 ? allOrdersCache.length : '';
                 renderOrders(allOrdersCache);
             });
+        }
+
+        function statusOptionsHTML(currentStatus) {
+            return ORDER_STATUS_OPTIONS.map(o =>
+                `<option value="${o.value}" ${currentStatus === o.value ? 'selected' : ''}>${o.label}</option>`
+            ).join('');
         }
 
         function renderOrders(orders) {
@@ -311,7 +395,7 @@
                 div.className = 'order-item';
                 const time = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleString('bn-BD') : '';
                 div.innerHTML = `
-                    <span class="order-status">${o.status || 'Pending'}</span>
+                    <span class="order-status-badge">${o.status || 'Pending'}</span>
                     <div class="order-top">
                         <span class="order-product"><i class="fa-solid fa-box"></i> ${o.product || '-'}</span>
                         <span class="order-total">৳${o.total || 0}</span>
@@ -320,13 +404,38 @@
                         <div><b>কাস্টমার:</b> ${o.customerName || '-'}</div>
                         <div><b>মোবাইল:</b> ${o.customerPhone || '-'}</div>
                         <div><b>ঠিকানা:</b> ${o.customerAddress || '-'}</div>
-                        <div><b>ডেলিভারি:</b> ${o.deliveryArea || '-'}</div>
+                        <div><b>ডেলিভারি এরিয়া:</b> ${o.deliveryArea || '-'}</div>
                         <div><b>পেমেন্ট:</b> ${o.paymentMethod || '-'} ${o.trxId ? '(TrxID: ' + o.trxId + ')' : ''}</div>
                         ${time ? `<div><b>সময়:</b> ${time}</div>` : ''}
                     </div>
+                    <div class="order-edit">
+                        <label>স্ট্যাটাস</label>
+                        <select id="status_${o.id}" style="margin-bottom:8px;">${statusOptionsHTML(o.status)}</select>
+                        <div class="grid2">
+                            <div>
+                                <label>রাইডারের নাম</label>
+                                <input id="rider_${o.id}" type="text" value="${o.riderName || ''}" placeholder="যেমন: করিম">
+                            </div>
+                            <div>
+                                <label>রাইডারের ফোন</label>
+                                <input id="riderPhone_${o.id}" type="text" value="${o.riderPhone || ''}" placeholder="01XXXXXXXXX">
+                            </div>
+                        </div>
+                        <div class="grid2">
+                            <div>
+                                <label>ডেলিভারি পার্টনার</label>
+                                <input id="service_${o.id}" type="text" list="deliveryServices" value="${o.deliveryService || ''}" placeholder="Pathao/Steadfast...">
+                            </div>
+                            <div>
+                                <label>প্রত্যাশিত সময়</label>
+                                <input id="eta_${o.id}" type="text" value="${o.estimatedTime || ''}" placeholder="আজ সন্ধ্যা ৬টা">
+                            </div>
+                        </div>
+                    </div>
                     <div class="order-actions">
-                        <a class="btn-call" href="tel:${o.customerPhone || ''}"><i class="fa-solid fa-phone"></i> কল করুন</a>
-                        <button class="btn-order-delete" onclick="deleteOrder('${o.id}')"><i class="fa-solid fa-trash"></i> ডিলিট (ডেলিভারড)</button>
+                        <a class="btn-call" href="tel:${o.customerPhone || ''}"><i class="fa-solid fa-phone"></i> কল</a>
+                        <button class="btn-update" onclick="updateOrder('${o.id}')"><i class="fa-solid fa-floppy-disk"></i> আপডেট</button>
+                        <button class="btn-order-delete" onclick="deleteOrder('${o.id}')"><i class="fa-solid fa-trash"></i> ডিলিট</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -343,8 +452,26 @@
             renderOrders(filtered);
         }
 
+        function updateOrder(id) {
+            const status = document.getElementById('status_' + id).value;
+            const riderName = document.getElementById('rider_' + id).value.trim();
+            const riderPhone = document.getElementById('riderPhone_' + id).value.trim();
+            const deliveryService = document.getElementById('service_' + id).value.trim();
+            const estimatedTime = document.getElementById('eta_' + id).value.trim();
+
+            db.collection('orders').doc(id).update({
+                status, riderName, riderPhone, deliveryService, estimatedTime,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert('অর্ডার স্ট্যাটাস আপডেট হয়েছে! কাস্টমার এখন লাইভ দেখতে পাবেন।');
+            }).catch(err => {
+                console.error(err);
+                alert('আপডেট করতে সমস্যা হয়েছে।');
+            });
+        }
+
         function deleteOrder(id) {
-            if (confirm('অর্ডারটি ডেলিভারি সম্পন্ন হয়ে গেছে এবং লিস্ট থেকে ডিলিট করতে চান?')) {
+            if (confirm('অর্ডারটি ডিলিট করতে চান? (ডেলিভারি সম্পন্ন হয়ে থাকলে এটি করুন)')) {
                 db.collection('orders').doc(id).delete();
             }
         }
