@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NeedJp Electronics - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --primary-gold: #c59d5f; --primary-dark: #111111; --accent-red: #e60023; --bg-light: #f4f6f8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: var(--bg-light); color: #222; padding: 70px 12px 30px; }
+        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--primary-dark); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 2px solid var(--primary-gold); }
+        header h1 { font-size: 16px; color: var(--primary-gold); }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,17,17,0.95); display: flex; justify-content: center; align-items: center; z-index: 99999; padding: 20px; }
+        .login-card { background: #fff; padding: 25px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; border-top: 5px solid var(--primary-gold); }
+        .admin-container { max-width: 600px; margin: 0 auto; display: none; }
+        .card { background: #fff; padding: 18px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 20px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; }
+        .btn-submit { background: var(--primary-dark); color: var(--primary-gold); border: 1px solid var(--primary-gold); padding: 14px; font-weight: 700; border-radius: 12px; cursor: pointer; width: 100%; }
+        .preview-box { margin-top: 10px; display: none; text-align: center; }
+        .preview-box img { max-width: 120px; border-radius: 10px; }
+
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #888; font-size: 14px; }
+
+        .product-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; gap: 8px; }
+        .product-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
+        .product-details strong { display: block; font-size: 13px; }
+        .product-details span { color: var(--primary-gold); font-size: 12px; font-weight: bold; }
+
+        .actions { display: flex; gap: 6px; align-items: center; }
+        .btn-stock { border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .btn-in-stock { background: #e8f5e9; color: #2e7d32; }
+        .btn-out-stock { background: #fff3e0; color: #ef6c00; }
+        .btn-delete { background: #ffebee; color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2 style="margin-bottom:15px;"><i class="fa-solid fa-lock" style="color: var(--primary-gold);"></i> NeedJp Electronics Admin</h2>
+            <form id="adminLoginForm">
+                <div class="form-group"><input type="text" id="adminUser" placeholder="ইউজারনেম" required></div>
+                <div class="form-group"><input type="password" id="adminPass" placeholder="পাসওয়ার্ড" required></div>
+                <button type="submit" class="btn-submit">লগইন করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-container" id="adminContainer">
+        <header>
+            <h1><i class="fa-solid fa-user-shield"></i> NeedJp Electronics Admin</h1>
+            <button style="background:none; border:none; color:#fff;" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </header>
+
+        <div class="card">
+            <h2>নতুন প্রোডাক্ট যোগ করুন</h2>
+            <form id="addProductForm">
+                <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="pTitle" required></div>
+                <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="pPrice" required></div>
+                <div class="form-group"><label>ছবি নির্বাচন করুন *</label><input type="file" id="pImgFile" accept="image/*" onchange="handleImageCompress(event)"></div>
+                <div class="form-group"><label>অথবা ছবির URL দিন</label><input type="url" id="pImgUrl" onchange="previewUrlImage()"></div>
+                <div class="preview-box" id="previewBox"><img id="imgPreview" src=""></div>
+                <div class="form-group"><label>বিবরণ</label><textarea id="pDesc" rows="3"></textarea></div>
+                <button type="submit" class="btn-submit" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> আপলোড করুন</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>প্রোডাক্ট তালিকা ও স্টক ম্যানেজমেন্ট</h2>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="adminSearchInput" placeholder="প্রোডাক্ট খুঁজুন..." oninput="filterAdminProducts()">
+            </div>
+            <div id="adminProductList"></div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_USER = "Needjpelec", ADMIN_PASS = "Elec@2025";
+        let compressedBase64Image = "";
+        let allProductsCache = [];
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDjXLiTltnnwuiuT3mKharRvliG_X7ia7w",
+          authDomain: "need-jp-electronics-store.firebaseapp.com",
+          projectId: "need-jp-electronics-store",
+          storageBucket: "need-jp-electronics-store.firebasestorage.app",
+          messagingSenderId: "944877931966",
+          appId: "1:944877931966:web:55954dee5aa6041df2bdef"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('needjp_admin_logged') === 'true') showAdminDashboard();
+        });
+
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (document.getElementById('adminUser').value.trim() === ADMIN_USER && document.getElementById('adminPass').value.trim() === ADMIN_PASS) {
+                sessionStorage.setItem('needjp_admin_logged', 'true');
+                showAdminDashboard();
+            } else alert('ভুল পাসওয়ার্ড!');
+        });
+
+        function showAdminDashboard() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminContainer').style.display = 'block';
+            loadAdminProducts();
+        }
+
+        function logoutAdmin() { sessionStorage.removeItem('needjp_admin_logged'); location.reload(); }
+
+        function handleImageCompress(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxWidth = 700;
+                    let width = img.width, height = img.height;
+                    if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    compressedBase64Image = canvas.toDataURL('image/jpeg', 0.65);
+                    document.getElementById('imgPreview').src = compressedBase64Image;
+                    document.getElementById('previewBox').style.display = 'block';
+                }
+            }
+        }
+
+        function previewUrlImage() {
+            const url = document.getElementById('pImgUrl').value.trim();
+            if (url) { compressedBase64Image = url; document.getElementById('imgPreview').src = url; document.getElementById('previewBox').style.display = 'block'; }
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!compressedBase64Image) return alert('ছবি সিলেক্ট করুন!');
+
+            db.collection('products').add({
+                title: document.getElementById('pTitle').value.trim(),
+                price: Number(document.getElementById('pPrice').value),
+                image: compressedBase64Image,
+                description: document.getElementById('pDesc').value.trim(),
+                inStock: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert('প্রোডাক্ট আপলোড হয়েছে!');
+                document.getElementById('addProductForm').reset();
+                document.getElementById('previewBox').style.display = 'none';
+                compressedBase64Image = "";
+            });
+        });
+
+        function loadAdminProducts() {
+            db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                allProductsCache = [];
+                snapshot.forEach(doc => {
+                    allProductsCache.push({ id: doc.id, ...doc.data() });
+                });
+                renderAdminProducts(allProductsCache);
+            });
+        }
+
+        function renderAdminProducts(products) {
+            const list = document.getElementById('adminProductList');
+            list.innerHTML = '';
+
+            if (products.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#888; padding:15px; font-size:13px;">কোনো প্রোডাক্ট পাওয়া যায়নি!</p>';
+                return;
+            }
+
+            products.forEach(p => {
+                const id = p.id;
+                const isStock = p.inStock !== false;
+
+                const div = document.createElement('div');
+                div.className = 'product-item';
+                div.innerHTML = `
+                    <div class="product-info">
+                        <img src="${p.image}" class="product-img">
+                        <div class="product-details">
+                            <strong>${p.title}</strong>
+                            <span>৳${p.price}</span>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-stock ${isStock ? 'btn-in-stock' : 'btn-out-stock'}" onclick="toggleStock('${id}', ${isStock})">
+                            ${isStock ? 'In Stock' : 'Stock Out'}
+                        </button>
+                        <button class="btn-delete" onclick="deleteProduct('${id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function filterAdminProducts() {
+            const query = document.getElementById('adminSearchInput').value.toLowerCase().trim();
+            const filtered = allProductsCache.filter(p => p.title.toLowerCase().includes(query));
+            renderAdminProducts(filtered);
+        }
+
+        function toggleStock(id, currentStatus) {
+            db.collection('products').doc(id).update({
+                inStock: !currentStatus
+            });
+        }
+
+        function deleteProduct(id) {
+            if(confirm('ডিলিট করতে চান?')) db.collection('products').doc(id).delete();
+        }
+    </script>
+</body>
+</html>
