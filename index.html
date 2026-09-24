@@ -259,7 +259,6 @@
     <nav>
         <div class="nav-links">
             <a href="index.html">HOME</a>
-            <a href="#">COLLECTION</a>
             <a href="javascript:void(0)" onclick="openTrackModal()"><i class="fa-solid fa-truck-fast"></i> TRACK ORDER</a>
         </div>
         <div class="search-container">
@@ -358,12 +357,12 @@
             <form id="orderForm">
                 <div class="form-group">
                     <label>আপনার নাম *</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-user"></i><input type="text" id="cName" required placeholder="আপনার পুরো নাম লিখুন"></div>
+                    <div class="input-wrapper"><i class="fa-solid fa-user"></i><input type="text" id="cName" required placeholder="আপনার পুরো নাম লিখুন" oninput="sanitizeNameField(this)"></div>
                 </div>
 
                 <div class="form-group">
                     <label>মোবাইল নম্বর *</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-phone"></i><input type="tel" id="cPhone" required placeholder="017XXXXXXXX"></div>
+                    <div class="input-wrapper"><i class="fa-solid fa-phone"></i><input type="tel" id="cPhone" required placeholder="01XXXXXXXXX" inputmode="numeric" maxlength="11" oninput="sanitizePhoneField(this)"></div>
                 </div>
 
                 <div class="form-group">
@@ -431,7 +430,7 @@
             <h2 style="font-size:18px; margin-bottom:14px; text-align:center; color:var(--text-main);"><i class="fa-solid fa-truck-fast" style="color:var(--neon-cyan);"></i> আপনার অর্ডার ট্র্যাক করুন</h2>
             <div class="form-group">
                 <label>মোবাইল নম্বর দিন *</label>
-                <div class="input-wrapper"><i class="fa-solid fa-phone"></i><input type="tel" id="trackPhone" placeholder="যে নম্বর দিয়ে অর্ডার করেছেন"></div>
+                <div class="input-wrapper"><i class="fa-solid fa-phone"></i><input type="tel" id="trackPhone" placeholder="যে নম্বর দিয়ে অর্ডার করেছেন" inputmode="numeric" maxlength="11" oninput="handleTrackPhoneInput(this)"></div>
             </div>
             <button class="btn-neon" onclick="trackOrderByPhone()"><i class="fa-solid fa-magnifying-glass"></i> ট্র্যাক করুন</button>
             <div id="trackResults" style="margin-top:18px;"></div>
@@ -639,6 +638,17 @@
             }
         }
 
+        /* Live sanitizers — keep the Name field letters-only and the Phone field digits-only,
+           so it's impossible to type a phone number into the name box or vice-versa. */
+        function sanitizeNameField(el) {
+            el.value = el.value.replace(/[0-9]/g, '');
+        }
+        function sanitizePhoneField(el) {
+            el.value = el.value.replace(/[^0-9]/g, '').slice(0, 11);
+        }
+
+        const BD_PHONE_REGEX = /^01[3-9][0-9]{8}$/;
+
         /* Send Order — saves to Firestore ONLY (no WhatsApp redirect), then shows live order tracking */
         function sendOrder() {
             const name = document.getElementById('cName').value.trim();
@@ -651,6 +661,12 @@
 
             if (!name || !phone || !address) {
                 return alert('অনুগ্রহ করে সকল প্রয়োজনীয় তথ্য পূরণ করুন!');
+            }
+            if (name.length < 2 || !/[a-zA-Zঅ-হড়ঢ়য়ংঃঁািীুূৃেৈোৌ]/.test(name)) {
+                return alert('অনুগ্রহ করে আপনার সঠিক নাম লিখুন!');
+            }
+            if (!BD_PHONE_REGEX.test(phone)) {
+                return alert('সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (উদাহরণ: 01712345678)');
             }
             if ((method.includes('bKash') || method.includes('Nagad')) && !trx) {
                 return alert('পেমেন্টের TrxID প্রদান করুন!');
@@ -746,23 +762,46 @@
             if (trackUnsub) { trackUnsub(); trackUnsub = null; }
         }
 
+        /* Auto-sanitize the track phone field, and auto-search the moment a valid 11-digit number is typed */
+        function handleTrackPhoneInput(el) {
+            el.value = el.value.replace(/[^0-9]/g, '').slice(0, 11);
+            if (BD_PHONE_REGEX.test(el.value)) {
+                trackOrderByPhone();
+            }
+        }
+
         function trackOrderByPhone() {
             const phone = document.getElementById('trackPhone').value.trim();
             const resultsBox = document.getElementById('trackResults');
             if (!phone) { alert('মোবাইল নম্বর দিন!'); return; }
+            if (!BD_PHONE_REGEX.test(phone)) {
+                resultsBox.innerHTML = '<p style="text-align:center; color:var(--text-dim); font-size:12px;">সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (উদাহরণ: 01712345678)</p>';
+                return;
+            }
 
             resultsBox.innerHTML = '<p style="text-align:center; color:var(--text-dim); font-size:12px;">খোঁজা হচ্ছে...</p>';
             if (trackUnsub) { trackUnsub(); trackUnsub = null; }
 
-            trackUnsub = db.collection('orders').where('customerPhone', '==', phone).orderBy('createdAt', 'desc').limit(5)
+            /* NOTE: deliberately no .orderBy() here — combining where()+orderBy() on different
+               fields needs a manually-created Firestore composite index. We sort client-side
+               instead so tracking works immediately with zero extra Firebase setup. */
+            trackUnsub = db.collection('orders').where('customerPhone', '==', phone).limit(20)
                 .onSnapshot(snapshot => {
                     if (snapshot.empty) {
                         resultsBox.innerHTML = '<p style="text-align:center; color:var(--text-dim); font-size:12px;">এই নম্বরে কোনো অর্ডার পাওয়া যায়নি।</p>';
                         return;
                     }
+                    let orders = [];
+                    snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+                    orders.sort((a, b) => {
+                        const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+                        const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+                        return tb - ta;
+                    });
+                    orders = orders.slice(0, 5);
+
                     resultsBox.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        const o = doc.data();
+                    orders.forEach(o => {
                         const card = document.createElement('div');
                         card.className = 'track-result-card';
                         card.innerHTML = `
@@ -770,7 +809,7 @@
                                 <span class="tname">${o.product || '-'}</span>
                                 <span class="tstatus">${o.status || 'Pending'}</span>
                             </div>
-                            <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">অর্ডার আইডি: #${doc.id.slice(-6).toUpperCase()} • মোট: ৳${o.total || 0}</div>
+                            <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">অর্ডার আইডি: #${o.id.slice(-6).toUpperCase()} • মোট: ৳${o.total || 0}</div>
                             ${buildTrackerHTML(o)}
                         `;
                         resultsBox.appendChild(card);
