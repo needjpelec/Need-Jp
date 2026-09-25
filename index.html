@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeedJp Electronics - Online Store</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Non-critical CSS: loaded without blocking the first paint (big speed win) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    </noscript>
 
     <style>
         :root {
@@ -219,6 +223,32 @@
             .btn-buy, .btn-view { padding: 9px 4px; font-size: 10px; }
             .modal-content { padding: 20px 18px; }
         }
+
+        /* ============ MOBILE HEADER FIX ============ */
+        @media (max-width: 768px) {
+            .top-bar { justify-content: center; gap: 0; padding: 8px 4%; flex-wrap: nowrap; overflow-x: auto; }
+            .top-bar-left, .top-bar-right { gap: 18px; }
+            .top-bar-left { margin-right: 18px; }
+            .top-bar a { font-size: 16px; white-space: nowrap; }
+            .tb-text { display: none; }
+
+            header { padding: 12px 4%; gap: 10px; }
+            .scrolling-text-box { display: none; }
+            .logo { font-size: 17px; letter-spacing: 0.5px; }
+            .logo i { font-size: 16px !important; margin-right: 5px !important; }
+            .header-icons { gap: 10px; }
+            .header-icons a { width: 34px; height: 34px; font-size: 15px; }
+
+            nav { padding: 10px 4%; gap: 8px; }
+            .nav-links { display: flex; gap: 0; overflow-x: auto; white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none; }
+            .nav-links::-webkit-scrollbar { display: none; }
+            .nav-links a { margin-right: 16px; font-size: 11px; flex: 0 0 auto; }
+        }
+        @media (max-width: 360px) {
+            .logo { font-size: 15px; }
+            .header-icons a { width: 30px; height: 30px; font-size: 13px; }
+            .header-icons { gap: 7px; }
+        }
     </style>
 </head>
 <body>
@@ -226,12 +256,12 @@
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-left">
-            <a href="#contact"><i class="fa-solid fa-envelope" style="color:var(--neon-cyan)"></i> Contact Us</a>
+            <a href="#contact"><i class="fa-solid fa-envelope" style="color:var(--neon-cyan)"></i> <span class="tb-text">Contact Us</span></a>
         </div>
         <div class="top-bar-right">
-            <a href="mailto:mdhayfajothussain38@gmail.com"><i class="fa-solid fa-envelope"></i> mdhayfajothussain38@gmail.com</a>
-            <a href="tel:+8801732274010"><i class="fa-solid fa-phone"></i> +8801732274010</a>
-            <a href="https://wa.me/8801741272223" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> +8801741272223</a>
+            <a href="mailto:mdhayfajothussain38@gmail.com"><i class="fa-solid fa-envelope"></i> <span class="tb-text">mdhayfajothussain38@gmail.com</span></a>
+            <a href="tel:+8801732274010"><i class="fa-solid fa-phone"></i> <span class="tb-text">+8801732274010</span></a>
+            <a href="https://wa.me/8801741272223" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> <span class="tb-text">+8801741272223</span></a>
         </div>
     </div>
 
@@ -457,6 +487,8 @@
         <p style="margin-top:5px;">&copy; 2026 NeedJp Electronics. All Rights Reserved.</p>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
         const firebaseConfig = {
           apiKey: "AIzaSyDjXLiTltnnwuiuT3mKharRvliG_X7ia7w",
@@ -492,7 +524,7 @@
 
         function loadProductsFromFirebase() {
             const grid = document.getElementById('productGrid');
-            db.collection('products').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            db.collection('products').orderBy('createdAt', 'desc').limit(60).onSnapshot(snapshot => {
                 grid.innerHTML = '';
                 if (snapshot.empty) {
                     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px 0;">কোনো প্রোডাক্ট পাওয়া যায়নি। শীঘ্রই নতুন গ্যাজেট যুক্ত হবে।</p>';
@@ -522,7 +554,7 @@
                             <i class="fa-regular fa-heart"></i>
                         </div>
                         <div class="img-box-grid" onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">
-                            <img src="${p.image}" alt="${p.title}">
+                            <img src="${p.image}" alt="${p.title}" loading="lazy">
                         </div>
                         <div class="product-info">
                             <span class="product-category">ELECTRONICS</span>
