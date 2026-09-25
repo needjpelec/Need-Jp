@@ -39,6 +39,10 @@
         .btn-submit { background: var(--neon-gradient); color: #05070d; border: none; padding: 14px; font-weight: 800; border-radius: 12px; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
         .preview-box { margin-top: 10px; display: none; text-align: center; }
         .preview-box img { max-width: 120px; border-radius: 10px; border: 1px solid var(--border-soft); }
+        .preview-thumb { position: relative; width: 70px; height: 70px; }
+        .preview-thumb img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-soft); }
+        .preview-thumb .remove-thumb { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-red); color: #fff; border: none; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .preview-thumb .cover-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); background: var(--neon-gradient); color: #05070d; font-size: 8px; font-weight: 800; padding: 1px 6px; border-radius: 6px; white-space: nowrap; }
 
         .search-box { position: relative; margin-bottom: 15px; }
         .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 14px; outline: none; background: var(--bg-card); color: var(--text-main); }
@@ -120,9 +124,21 @@
                 <form id="addProductForm">
                     <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="pTitle" required></div>
                     <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="pPrice" required></div>
-                    <div class="form-group"><label>ছবি নির্বাচন করুন *</label><input type="file" id="pImgFile" accept="image/*" onchange="handleImageCompress(event)"></div>
-                    <div class="form-group"><label>অথবা ছবির URL দিন</label><input type="url" id="pImgUrl" onchange="previewUrlImage()"></div>
-                    <div class="preview-box" id="previewBox"><img id="imgPreview" src=""></div>
+                    <div class="form-group">
+                        <label>ছবি নির্বাচন করুন (একাধিক ছবি একসাথে সিলেক্ট করতে পারবেন) *</label>
+                        <input type="file" id="pImgFile" accept="image/*" multiple onchange="handleImageCompress(event)">
+                    </div>
+                    <div class="form-group">
+                        <label>অথবা ছবির URL দিন</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="url" id="pImgUrl" placeholder="https://..." style="flex:1;">
+                            <button type="button" onclick="addImageByUrl()" style="background:var(--bg-card); color:var(--neon-cyan); border:1px solid var(--border-soft); border-radius:10px; padding:0 16px; font-weight:700; cursor:pointer; white-space:nowrap;">+ যোগ করুন</button>
+                        </div>
+                    </div>
+                    <div class="preview-box" id="previewBox" style="display:none;">
+                        <div id="imgPreviewStrip" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;"></div>
+                        <p style="font-size:10.5px; color:var(--text-dim); margin-top:6px;"><i class="fa-solid fa-circle-info"></i> প্রথম ছবিটি প্রধান (কভার) ছবি হিসেবে দেখানো হবে</p>
+                    </div>
                     <div class="form-group"><label>বিবরণ</label><textarea id="pDesc" rows="3"></textarea></div>
                     <button type="submit" class="btn-submit" id="saveBtn"><i class="fa-solid fa-cloud-arrow-up"></i> আপলোড করুন</button>
                 </form>
@@ -160,7 +176,7 @@
 
     <script>
         const ADMIN_USER = "Needjpelec", ADMIN_PASS = "Elec@2025";
-        let compressedBase64Image = "";
+        let selectedImages = [];
         let allProductsCache = [];
         let allOrdersCache = [];
         let isFirstOrdersSnapshot = true;
@@ -246,50 +262,106 @@
             setTimeout(() => btn.classList.remove('flash'), 3000);
         }
 
-        /* ---------- PRODUCTS ---------- */
-        function handleImageCompress(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const maxWidth = 700;
-                    let width = img.width, height = img.height;
-                    if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
-                    canvas.width = width; canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                    compressedBase64Image = canvas.toDataURL('image/jpeg', 0.65);
-                    document.getElementById('imgPreview').src = compressedBase64Image;
-                    document.getElementById('previewBox').style.display = 'block';
+        /* ---------- PRODUCTS (multi-image) ---------- */
+        function renderImagePreviewStrip() {
+            const strip = document.getElementById('imgPreviewStrip');
+            const box = document.getElementById('previewBox');
+            strip.innerHTML = '';
+            if (selectedImages.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+            box.style.display = 'block';
+            selectedImages.forEach((src, idx) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'preview-thumb';
+                thumb.innerHTML = `
+                    <img src="${src}">
+                    <button type="button" class="remove-thumb" onclick="removeSelectedImage(${idx})"><i class="fa-solid fa-xmark"></i></button>
+                    ${idx === 0 ? '<span class="cover-badge">COVER</span>' : ''}
+                `;
+                strip.appendChild(thumb);
+            });
+        }
+
+        function removeSelectedImage(idx) {
+            selectedImages.splice(idx, 1);
+            renderImagePreviewStrip();
+        }
+
+        function compressFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const maxWidth = 700;
+                        let width = img.width, height = img.height;
+                        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.65));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleImageCompress(event) {
+            const files = Array.from(event.target.files || []);
+            if (files.length === 0) return;
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ছবি প্রসেস হচ্ছে...';
+            try {
+                for (const file of files) {
+                    const compressed = await compressFile(file);
+                    selectedImages.push(compressed);
                 }
+                renderImagePreviewStrip();
+            } catch (err) {
+                console.error(err);
+                alert('ছবি প্রসেস করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> আপলোড করুন';
+                event.target.value = '';
             }
         }
 
-        function previewUrlImage() {
-            const url = document.getElementById('pImgUrl').value.trim();
-            if (url) { compressedBase64Image = url; document.getElementById('imgPreview').src = url; document.getElementById('previewBox').style.display = 'block'; }
+        function addImageByUrl() {
+            const urlInput = document.getElementById('pImgUrl');
+            const url = urlInput.value.trim();
+            if (!url) return alert('একটি ছবির URL দিন!');
+            selectedImages.push(url);
+            urlInput.value = '';
+            renderImagePreviewStrip();
         }
 
         document.getElementById('addProductForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            if (!compressedBase64Image) return alert('ছবি সিলেক্ট করুন!');
+            if (selectedImages.length === 0) return alert('অন্তত একটি ছবি যোগ করুন!');
 
             db.collection('products').add({
                 title: document.getElementById('pTitle').value.trim(),
                 price: Number(document.getElementById('pPrice').value),
-                image: compressedBase64Image,
+                images: selectedImages,
+                image: selectedImages[0],
                 description: document.getElementById('pDesc').value.trim(),
                 inStock: true,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 alert('প্রোডাক্ট আপলোড হয়েছে!');
                 document.getElementById('addProductForm').reset();
-                document.getElementById('previewBox').style.display = 'none';
-                compressedBase64Image = "";
+                selectedImages = [];
+                renderImagePreviewStrip();
+            }).catch(err => {
+                console.error(err);
+                alert('আপলোড করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
             });
         });
 
@@ -315,14 +387,16 @@
             products.forEach(p => {
                 const id = p.id;
                 const isStock = p.inStock !== false;
+                const thumb = (Array.isArray(p.images) && p.images.length > 0) ? p.images[0] : (p.image || '');
+                const imgCount = Array.isArray(p.images) ? p.images.length : (p.image ? 1 : 0);
 
                 const div = document.createElement('div');
                 div.className = 'product-item';
                 div.innerHTML = `
                     <div class="product-info">
-                        <img src="${p.image}" class="product-img">
+                        <img src="${thumb}" class="product-img">
                         <div class="product-details">
-                            <strong>${p.title}</strong>
+                            <strong>${p.title} ${imgCount > 1 ? `<span style="color:var(--text-dim); font-weight:600; font-size:10px;">(${imgCount} ছবি)</span>` : ''}</strong>
                             <span>৳${p.price}</span>
                         </div>
                     </div>
