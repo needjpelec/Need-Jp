@@ -111,6 +111,15 @@
         .img-box-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
         .product-card:hover .img-box-grid img { transform: scale(1.08); }
 
+        /* Swipeable multi-image gallery (product cards + details modal) */
+        .img-scroll { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -ms-overflow-style: none; scrollbar-width: none; height: 100%; width: 100%; }
+        .img-scroll::-webkit-scrollbar { display: none; }
+        .img-slide { flex: 0 0 100%; scroll-snap-align: start; height: 100%; width: 100%; }
+        .img-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .img-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 3; }
+        .img-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.45); transition: 0.25s; }
+        .img-dots .dot.active { background: var(--neon-cyan); width: 16px; border-radius: 3px; box-shadow: 0 0 6px rgba(0,229,255,0.6); }
+
         .product-info { padding: 18px; text-align: left; }
         .product-category { font-size: 10px; color: var(--neon-cyan); text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin-bottom: 5px; display: block; }
         .product-info h3 { font-size: 16px; color: var(--text-main); margin-bottom: 8px; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
@@ -143,8 +152,8 @@
         .close-btn { position: absolute; top: 15px; right: 15px; font-size: 16px; cursor: pointer; color: var(--text-dim); background: var(--bg-card); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; z-index: 10; border: 1px solid var(--border-soft); }
         .close-btn:hover { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
 
-        .img-zoom-container { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 15px; cursor: zoom-in; border: 1px solid var(--border-soft); }
-        .img-zoom-container img { width: 100%; max-height: 280px; object-fit: cover; transition: transform 0.3s ease; display: block; }
+        .img-zoom-container { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 15px; cursor: zoom-in; border: 1px solid var(--border-soft); height: 280px; }
+        .img-zoom-container .img-slide img { max-height: 280px; }
         .img-zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 10px; pointer-events: none; }
 
         #zoomOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.94); z-index: 20000; justify-content: center; align-items: center; cursor: zoom-out; }
@@ -315,7 +324,7 @@
             <span class="close-btn" onclick="closeDetails()">&times;</span>
             <div style="text-align: center;">
                 <div class="img-zoom-container" onclick="openFullscreenZoom()">
-                    <img id="dImg" src="" alt="Product Image">
+                    <div id="modalGalleryWrap"></div>
                     <div class="img-zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i> জুম করতে ক্লিক করুন</div>
                 </div>
 
@@ -508,6 +517,7 @@
         let wishlist = JSON.parse(localStorage.getItem('needjp_wishlist')) || [];
         let successOrderUnsub = null;
         let trackUnsub = null;
+        let productsCache = {};
 
         const ORDER_STEPS = [
             { key: 'Pending', label: 'অর্ডার প্লেসড', icon: 'fa-clipboard-check' },
@@ -522,10 +532,29 @@
             updateWishlistUI();
         });
 
+        function buildGalleryHTML(images) {
+            const imgs = (images && images.length > 0) ? images : [''];
+            let slides = imgs.map(img => `<div class="img-slide"><img src="${img}" alt="product" loading="lazy"></div>`).join('');
+            let dots = imgs.length > 1 ? `<div class="img-dots">${imgs.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : '';
+            return `<div class="img-scroll">${slides}</div>${dots}`;
+        }
+
+        function attachGalleryScroll(container) {
+            if (!container) return;
+            const scrollEl = container.querySelector('.img-scroll');
+            const dots = container.querySelectorAll('.dot');
+            if (!scrollEl || dots.length < 2) return;
+            scrollEl.addEventListener('scroll', () => {
+                const idx = Math.round(scrollEl.scrollLeft / scrollEl.clientWidth);
+                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+            }, { passive: true });
+        }
+
         function loadProductsFromFirebase() {
             const grid = document.getElementById('productGrid');
             db.collection('products').orderBy('createdAt', 'desc').limit(60).onSnapshot(snapshot => {
                 grid.innerHTML = '';
+                productsCache = {};
                 if (snapshot.empty) {
                     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px 0;">কোনো প্রোডাক্ট পাওয়া যায়নি। শীঘ্রই নতুন গ্যাজেট যুক্ত হবে।</p>';
                     return;
@@ -536,7 +565,16 @@
                     const id = doc.id;
                     const isStock = p.inStock !== false;
                     const safeTitle = p.title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                    const safeDesc = p.description ? p.description.replace(/'/g, "\\'").replace(/\n/g, "\\n") : '';
+                    const images = Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
+                    const thumb = images[0] || '';
+
+                    productsCache[id] = {
+                        title: p.title,
+                        price: p.price,
+                        images: images,
+                        desc: p.description || '',
+                        inStock: isStock
+                    };
 
                     const avgRating = p.avgRating || 5;
                     let starsHTML = '';
@@ -550,15 +588,15 @@
 
                     card.innerHTML = `
                         <div class="product-tag">HOT</div>
-                        <div class="wishlist-icon" onclick="toggleWishlist('${id}', '${safeTitle}', ${p.price}, '${p.image}', this)">
+                        <div class="wishlist-icon" onclick="toggleWishlist('${id}', '${safeTitle}', ${p.price}, '${thumb}', this)">
                             <i class="fa-regular fa-heart"></i>
                         </div>
-                        <div class="img-box-grid" onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">
-                            <img src="${p.image}" alt="${p.title}" loading="lazy">
+                        <div class="img-box-grid" onclick="openDetails('${id}')">
+                            ${buildGalleryHTML(images)}
                         </div>
                         <div class="product-info">
                             <span class="product-category">ELECTRONICS</span>
-                            <h3 onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">${p.title}</h3>
+                            <h3 onclick="openDetails('${id}')">${p.title}</h3>
                             <div class="product-rating">
                                 ${starsHTML}
                                 <span>(${p.totalReviews || 1})</span>
@@ -569,30 +607,36 @@
                             </div>
                         </div>
                         <div class="button-group">
-                            <button class="btn-buy" ${isStock ? '' : 'disabled'} onclick="openCheckout('${safeTitle}', ${p.price})">
+                            <button class="btn-buy" ${isStock ? '' : 'disabled'} onclick="openCheckout('${id}')">
                                 <i class="fa-solid fa-bag-shopping"></i> ${isStock ? 'BUY NOW' : 'STOCK OUT'}
                             </button>
-                            <button class="btn-view" onclick="openDetails('${id}', '${safeTitle}', ${p.price}, '${p.image}', '${safeDesc}', ${isStock})">
+                            <button class="btn-view" onclick="openDetails('${id}')">
                                 <i class="fa-solid fa-eye"></i> VIEW
                             </button>
                         </div>
                     `;
                     grid.appendChild(card);
+                    attachGalleryScroll(card.querySelector('.img-box-grid'));
                 });
                 updateWishlistUI();
             });
         }
 
-        function openDetails(id, title, price, img, desc, isStock = true) {
+        function openDetails(id) {
+            const p = productsCache[id];
+            if (!p) return;
             currentProductId = id;
-            currentProductStock = isStock;
-            document.getElementById('dTitle').innerText = title;
-            document.getElementById('dPrice').innerText = '৳' + price;
-            document.getElementById('dImg').src = img;
-            document.getElementById('dDesc').innerText = desc || 'কোনো বিবরণ দেওয়া হয়নি।';
+            currentProductStock = p.inStock;
+            document.getElementById('dTitle').innerText = p.title;
+            document.getElementById('dPrice').innerText = '৳' + p.price;
+            document.getElementById('dDesc').innerText = p.desc || 'কোনো বিবরণ দেওয়া হয়নি।';
+
+            const galleryWrap = document.getElementById('modalGalleryWrap');
+            galleryWrap.innerHTML = buildGalleryHTML(p.images);
+            attachGalleryScroll(galleryWrap.parentElement);
 
             const buyBtn = document.getElementById('dBuyBtn');
-            if(!isStock) {
+            if (!p.inStock) {
                 buyBtn.disabled = true;
                 buyBtn.innerHTML = '<i class="fa-solid fa-ban"></i> STOCK OUT';
             } else {
@@ -613,10 +657,16 @@
             const title = document.getElementById('dTitle').innerText;
             const price = Number(document.getElementById('dPrice').innerText.replace('৳', ''));
             closeDetails();
-            openCheckout(title, price);
+            openCheckoutDirect(title, price);
         }
 
-        function openCheckout(title, price) {
+        function openCheckout(id) {
+            const p = productsCache[id];
+            if (!p) { alert('প্রোডাক্ট পাওয়া যায়নি, পেজ রিফ্রেশ করে আবার চেষ্টা করুন।'); return; }
+            openCheckoutDirect(p.title, p.price);
+        }
+
+        function openCheckoutDirect(title, price) {
             selectedProduct = title;
             selectedPrice = price;
             document.getElementById('displayPName').innerText = title;
@@ -629,9 +679,13 @@
         }
 
         function openFullscreenZoom() {
-            const imgSrc = document.getElementById('dImg').src;
-            if (imgSrc) {
-                document.getElementById('zoomImg').src = imgSrc;
+            const scrollEl = document.querySelector('#modalGalleryWrap .img-scroll');
+            if (!scrollEl) return;
+            const idx = Math.round(scrollEl.scrollLeft / scrollEl.clientWidth) || 0;
+            const imgs = scrollEl.querySelectorAll('img');
+            const activeImg = imgs[idx] || imgs[0];
+            if (activeImg && activeImg.src) {
+                document.getElementById('zoomImg').src = activeImg.src;
                 document.getElementById('zoomOverlay').style.display = 'flex';
             }
         }
@@ -956,7 +1010,7 @@
                                 <span style="color:var(--neon-cyan); font-size:12px; font-weight:bold;">৳${item.price}</span>
                             </div>
                         </div>
-                        <button onclick="openCheckout('${item.title.replace(/'/g, "\\'")}', ${item.price}); closeWishlistModal();" style="background:var(--neon-gradient); color:#05070d; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">BUY</button>
+                        <button onclick="openCheckoutDirect('${item.title.replace(/'/g, "\\'")}', ${item.price}); closeWishlistModal();" style="background:var(--neon-gradient); color:#05070d; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">BUY</button>
                     `;
                     container.appendChild(div);
                 });
