@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>NeedJp Electronics - Online Store</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -106,6 +109,7 @@
         .wishlist-icon.active { color: var(--accent-red); }
 
         .product-tag { position: absolute; top: 12px; left: 12px; background: var(--bg-deep); color: var(--neon-cyan); font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; z-index: 2; letter-spacing: 0.5px; border: 1px solid var(--neon-cyan); box-shadow: 0 0 10px rgba(0,229,255,0.35); }
+        .product-tag.discount-tag { color: #fff; border-color: var(--accent-red); background: var(--accent-red); box-shadow: 0 0 10px rgba(255,45,85,0.45); }
 
         .img-box-grid { width: 100%; height: 250px; overflow: hidden; background: #0a0f1a; cursor: pointer; position: relative; }
         .img-box-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
@@ -130,6 +134,7 @@
 
         .product-price-wrapper { display: flex; align-items: center; justify-content: space-between; }
         .product-price-tag { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 800; color: var(--neon-cyan); }
+        .old-price { text-decoration: line-through; color: var(--text-dim); font-size: 12px; font-weight: 600; margin-right: 6px; }
 
         /* Dynamic Stock Badges */
         .stock-status { font-size: 10px; font-weight: 700; color: #2ee6a6; background: rgba(46,230,166,0.12); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(46,230,166,0.35); }
@@ -550,6 +555,18 @@
             }, { passive: true });
         }
 
+        /* Same ordering logic as the admin panel: explicit 'order' field wins (lower = shown first);
+           anything without one yet falls back to its current createdAt-desc position. */
+        function getSortedProducts(list) {
+            return list
+                .map((p, i) => ({ ...p, _fallbackOrder: (i + 1) * 10 }))
+                .sort((a, b) => {
+                    const oa = typeof a.order === 'number' ? a.order : a._fallbackOrder;
+                    const ob = typeof b.order === 'number' ? b.order : b._fallbackOrder;
+                    return oa - ob;
+                });
+        }
+
         function loadProductsFromFirebase() {
             const grid = document.getElementById('productGrid');
             db.collection('products').orderBy('createdAt', 'desc').limit(60).onSnapshot(snapshot => {
@@ -560,17 +577,24 @@
                     return;
                 }
 
-                snapshot.forEach(doc => {
-                    const p = doc.data();
-                    const id = doc.id;
+                let rawList = [];
+                snapshot.forEach(doc => rawList.push({ id: doc.id, ...doc.data() }));
+                const sortedList = getSortedProducts(rawList);
+
+                sortedList.forEach(p => {
+                    const id = p.id;
                     const isStock = p.inStock !== false;
                     const safeTitle = p.title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                     const images = Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
                     const thumb = images[0] || '';
+                    const discount = Number(p.discountPercent) || 0;
+                    const finalPrice = discount > 0 ? Math.round(p.price * (1 - discount / 100)) : p.price;
 
                     productsCache[id] = {
                         title: p.title,
                         price: p.price,
+                        finalPrice: finalPrice,
+                        discount: discount,
                         images: images,
                         desc: p.description || '',
                         inStock: isStock
@@ -582,13 +606,17 @@
                         starsHTML += `<i class="fa-${i <= Math.round(avgRating) ? 'solid' : 'regular'} fa-star"></i>`;
                     }
 
+                    const priceHTML = discount > 0
+                        ? `<span class="old-price">৳${p.price}</span> ৳${finalPrice}`
+                        : `৳${p.price}`;
+
                     const card = document.createElement('div');
                     card.className = 'product-card';
                     card.setAttribute('data-id', id);
 
                     card.innerHTML = `
-                        <div class="product-tag">HOT</div>
-                        <div class="wishlist-icon" onclick="toggleWishlist('${id}', '${safeTitle}', ${p.price}, '${thumb}', this)">
+                        <div class="product-tag ${discount > 0 ? 'discount-tag' : ''}">${discount > 0 ? '-' + discount + '%' : 'HOT'}</div>
+                        <div class="wishlist-icon" onclick="toggleWishlist('${id}', '${safeTitle}', ${finalPrice}, '${thumb}', this)">
                             <i class="fa-regular fa-heart"></i>
                         </div>
                         <div class="img-box-grid" onclick="openDetails('${id}')">
@@ -602,7 +630,7 @@
                                 <span>(${p.totalReviews || 1})</span>
                             </div>
                             <div class="product-price-wrapper">
-                                <div class="product-price-tag">৳${p.price}</div>
+                                <div class="product-price-tag">${priceHTML}</div>
                                 <span class="stock-status ${isStock ? '' : 'out-of-stock'}">${isStock ? 'In Stock' : 'Stock Out'}</span>
                             </div>
                         </div>
@@ -628,7 +656,9 @@
             currentProductId = id;
             currentProductStock = p.inStock;
             document.getElementById('dTitle').innerText = p.title;
-            document.getElementById('dPrice').innerText = '৳' + p.price;
+            document.getElementById('dPrice').innerHTML = p.discount > 0
+                ? `<span class="old-price" style="font-size:15px;">৳${p.price}</span> ৳${p.finalPrice}`
+                : '৳' + p.price;
             document.getElementById('dDesc').innerText = p.desc || 'কোনো বিবরণ দেওয়া হয়নি।';
 
             const galleryWrap = document.getElementById('modalGalleryWrap');
@@ -654,16 +684,16 @@
 
         function buyFromDetails() {
             if(!currentProductStock) return alert('দুঃখিত, এই প্রোডাক্টটি বর্তমানে স্টক আউট!');
-            const title = document.getElementById('dTitle').innerText;
-            const price = Number(document.getElementById('dPrice').innerText.replace('৳', ''));
+            const p = productsCache[currentProductId];
+            if (!p) return;
             closeDetails();
-            openCheckoutDirect(title, price);
+            openCheckoutDirect(p.title, p.finalPrice);
         }
 
         function openCheckout(id) {
             const p = productsCache[id];
             if (!p) { alert('প্রোডাক্ট পাওয়া যায়নি, পেজ রিফ্রেশ করে আবার চেষ্টা করুন।'); return; }
-            openCheckoutDirect(p.title, p.price);
+            openCheckoutDirect(p.title, p.finalPrice);
         }
 
         function openCheckoutDirect(title, price) {
