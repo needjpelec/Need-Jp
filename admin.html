@@ -84,8 +84,8 @@
         .btn-update { flex: 1; background: var(--neon-gradient); color: #05070d; border: none; padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-order-delete { flex: 1; background: rgba(255,45,85,0.12); color: var(--accent-red); border: 1px solid rgba(255,45,85,0.35); padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-        .tab-switch { display: flex; gap: 8px; margin-bottom: 18px; }
-        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; background: var(--bg-panel); border: 1px solid var(--border-soft); color: var(--text-dim); font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; position: relative; }
+        .tab-switch { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 90px; padding: 10px; border-radius: 10px; background: var(--bg-panel); border: 1px solid var(--border-soft); color: var(--text-dim); font-weight: 700; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; position: relative; }
         .tab-btn.active { background: var(--neon-gradient); color: #05070d; border-color: transparent; }
 
         @keyframes flashGlow { 0%, 100% { box-shadow: 0 0 0 rgba(255,45,85,0); } 50% { box-shadow: 0 0 18px rgba(255,45,85,0.85); } }
@@ -96,6 +96,11 @@
 
         .edit-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,4,9,0.85); backdrop-filter: blur(6px); z-index: 20000; justify-content: center; align-items: center; padding: 15px; }
         .edit-modal-content { background: var(--bg-panel); border: 1px solid var(--border-soft); border-radius: 18px; padding: 20px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
+
+        /* Seller Codes */
+        .seller-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-soft); gap: 8px; }
+        .seller-code-label { font-family: 'Orbitron', sans-serif; font-weight: 800; letter-spacing: 1px; color: var(--neon-cyan); background: var(--bg-card); border: 1px dashed var(--neon-cyan); padding: 5px 10px; border-radius: 8px; font-size: 12.5px; }
+        .seller-inactive { opacity: 0.5; }
     </style>
 </head>
 <body>
@@ -125,6 +130,7 @@
         <div class="tab-switch">
             <button class="tab-btn active" id="tabProductsBtn" onclick="switchTab('products')"><i class="fa-solid fa-box"></i> প্রোডাক্ট</button>
             <button class="tab-btn" id="tabOrdersBtn" onclick="switchTab('orders')"><i class="fa-solid fa-receipt"></i> অর্ডার <span id="orderCountBadge" style="background:var(--accent-red); color:#fff; border-radius:10px; padding:1px 7px; font-size:10px; margin-left:4px;"></span></button>
+            <button class="tab-btn" id="tabSellersBtn" onclick="switchTab('sellers')"><i class="fa-solid fa-store"></i> সেলার কোড</button>
         </div>
 
         <div id="productsTab">
@@ -134,6 +140,7 @@
                     <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="pTitle" required></div>
                     <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="pPrice" required></div>
                     <div class="form-group"><label>ডিসকাউন্ট % (ঐচ্ছিক, না দিলে ০ থাকবে)</label><input type="number" id="pDiscount" min="0" max="90" placeholder="যেমন: 10"></div>
+                    <div class="form-group"><label>রিসেলার প্রফিট ৳ (ঐচ্ছিক — সেলার কোড ব্যবহারকারীরা এই পরিমাণ লাভ পাবে)</label><input type="number" id="pResellerProfit" min="0" placeholder="যেমন: 30"></div>
                     <div class="form-group">
                         <label>ছবি নির্বাচন করুন (একাধিক ছবি একসাথে সিলেক্ট করতে পারবেন) *</label>
                         <input type="file" id="pImgFile" accept="image/*" multiple onchange="handleImageCompress(event)">
@@ -174,6 +181,22 @@
                 <div id="ordersList"></div>
             </div>
         </div>
+
+        <div id="sellersTab" style="display:none;">
+            <div class="card">
+                <h2>নতুন সেলার কোড যোগ করুন</h2>
+                <form id="addSellerForm">
+                    <div class="form-group"><label>সেলার কোড *</label><input type="text" id="slCode" style="text-transform:uppercase;" required placeholder="যেমন: RESELLER01"></div>
+                    <div class="form-group"><label>কার জন্য (ঐচ্ছিক নোট)</label><input type="text" id="slName" placeholder="যেমন: করিম — ঢাকা"></div>
+                    <p style="font-size:10.5px; color:var(--text-dim); margin-top:-8px; margin-bottom:14px;"><i class="fa-solid fa-circle-info"></i> এই কোড যাকে দেবেন, সে প্রতিটা প্রোডাক্টে সেট করা পাইকারি লাভসহ মূল্য দেখতে ও সেই দামে অর্ডার করতে পারবে।</p>
+                    <button type="submit" class="btn-submit"><i class="fa-solid fa-store"></i> কোড যোগ করুন</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>বিদ্যমান সেলার কোড সমূহ</h2>
+                <div id="sellersList"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Edit Product Modal -->
@@ -186,6 +209,7 @@
             <div class="form-group"><label>প্রোডাক্টের নাম *</label><input type="text" id="eTitle"></div>
             <div class="form-group"><label>মূল্য (BDT) *</label><input type="number" id="ePrice"></div>
             <div class="form-group"><label>ডিসকাউন্ট % (০ দিলে ছাড় থাকবে না)</label><input type="number" id="eDiscount" min="0" max="90"></div>
+            <div class="form-group"><label>রিসেলার প্রফিট ৳ (০ দিলে এই প্রোডাক্টে পাইকারি দাম দেখাবে না)</label><input type="number" id="eResellerProfit" min="0"></div>
             <div class="form-group">
                 <label>ছবি যোগ করুন (নতুন ছবি সিলেক্ট করলে বিদ্যমান ছবির সাথে যুক্ত হবে)</label>
                 <input type="file" id="eImgFile" accept="image/*" multiple onchange="handleEditImageCompress(event)">
@@ -263,6 +287,7 @@
 
             loadAdminProducts();
             loadOrders();
+            loadSellerCodes();
         }
 
         function logoutAdmin() { sessionStorage.removeItem('needjp_admin_logged'); location.reload(); }
@@ -270,8 +295,10 @@
         function switchTab(tab) {
             document.getElementById('productsTab').style.display = tab === 'products' ? 'block' : 'none';
             document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
+            document.getElementById('sellersTab').style.display = tab === 'sellers' ? 'block' : 'none';
             document.getElementById('tabProductsBtn').classList.toggle('active', tab === 'products');
             document.getElementById('tabOrdersBtn').classList.toggle('active', tab === 'orders');
+            document.getElementById('tabSellersBtn').classList.toggle('active', tab === 'sellers');
         }
 
         /* ---------- NEW ORDER NOTIFICATION (sound + browser notification) ---------- */
@@ -387,6 +414,7 @@
             if (selectedImages.length === 0) return alert('অন্তত একটি ছবি যোগ করুন!');
 
             const discountPercent = Number(document.getElementById('pDiscount').value) || 0;
+            const resellerProfit = Number(document.getElementById('pResellerProfit').value) || 0;
             const maxOrder = allProductsCache.reduce((max, p, i) => {
                 const ord = typeof p.order === 'number' ? p.order : (i + 1) * 10;
                 return Math.max(max, ord);
@@ -396,6 +424,7 @@
                 title: document.getElementById('pTitle').value.trim(),
                 price: Number(document.getElementById('pPrice').value),
                 discountPercent: discountPercent,
+                resellerProfit: resellerProfit,
                 images: selectedImages,
                 image: selectedImages[0],
                 description: document.getElementById('pDesc').value.trim(),
@@ -454,6 +483,7 @@
                 const thumb = (Array.isArray(p.images) && p.images.length > 0) ? p.images[0] : (p.image || '');
                 const imgCount = Array.isArray(p.images) ? p.images.length : (p.image ? 1 : 0);
                 const discount = Number(p.discountPercent) || 0;
+                const resellerProfit = Number(p.resellerProfit) || 0;
 
                 const div = document.createElement('div');
                 div.className = 'product-item';
@@ -463,7 +493,7 @@
                         <img src="${thumb}" class="product-img" loading="lazy">
                         <div class="product-details">
                             <strong>${p.title} ${imgCount > 1 ? `<span style="color:var(--text-dim); font-weight:600; font-size:10px;">(${imgCount} ছবি)</span>` : ''}</strong>
-                            <span>৳${p.price} ${discount > 0 ? `<span style="color:#2ee6a6;">(-${discount}% ছাড়)</span>` : ''}</span>
+                            <span>৳${p.price} ${discount > 0 ? `<span style="color:#2ee6a6;">(-${discount}% ছাড়)</span>` : ''} ${resellerProfit > 0 ? `<span style="color:var(--neon-cyan);">(পাইকারি লাভ ৳${resellerProfit})</span>` : ''}</span>
                         </div>
                     </div>
                     <div class="actions">
@@ -531,6 +561,7 @@
             document.getElementById('eTitle').value = p.title || '';
             document.getElementById('ePrice').value = p.price || 0;
             document.getElementById('eDiscount').value = p.discountPercent || 0;
+            document.getElementById('eResellerProfit').value = p.resellerProfit || 0;
             document.getElementById('eDesc').value = p.description || '';
             renderEditImagePreviewStrip();
 
@@ -605,6 +636,7 @@
             const title = document.getElementById('eTitle').value.trim();
             const price = Number(document.getElementById('ePrice').value);
             const discountPercent = Number(document.getElementById('eDiscount').value) || 0;
+            const resellerProfit = Number(document.getElementById('eResellerProfit').value) || 0;
             const description = document.getElementById('eDesc').value.trim();
 
             if (!title || !price) return alert('নাম ও মূল্য দিন!');
@@ -615,7 +647,7 @@
             saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
 
             db.collection('products').doc(editingProductId).update({
-                title, price, discountPercent, description,
+                title, price, discountPercent, resellerProfit, description,
                 images: editSelectedImages,
                 image: editSelectedImages[0],
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -674,6 +706,7 @@
                 const time = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleString('bn-BD') : '';
                 div.innerHTML = `
                     <span class="order-status-badge">${o.status || 'Pending'}</span>
+                    ${o.isWholesaleOrder ? `<span class="order-status-badge" style="background:rgba(0,229,255,0.15); color:var(--neon-cyan); margin-left:6px;"><i class="fa-solid fa-store"></i> পাইকারি অর্ডার</span>` : ''}
                     <div class="order-top">
                         <span class="order-product"><i class="fa-solid fa-box"></i> ${o.product || '-'}</span>
                         <span class="order-total">৳${o.total || 0}</span>
@@ -684,6 +717,7 @@
                         <div><b>ঠিকানা:</b> ${o.customerAddress || '-'}</div>
                         <div><b>ডেলিভারি এরিয়া:</b> ${o.deliveryArea || '-'}</div>
                         <div><b>পেমেন্ট:</b> ${o.paymentMethod || '-'} ${o.trxId ? '(TrxID: ' + o.trxId + ')' : ''}</div>
+                        ${o.isWholesaleOrder ? `<div><b>সেলার কোড:</b> ${o.sellerCode} — <b>MRP:</b> ৳${o.price} — <b>সেলারের লাভ:</b> ৳${o.resellerProfit}</div>` : ''}
                         ${time ? `<div><b>সময়:</b> ${time}</div>` : ''}
                     </div>
                     <div class="order-edit">
@@ -752,6 +786,62 @@
             if (confirm('অর্ডারটি ডিলিট করতে চান? (ডেলিভারি সম্পন্ন হয়ে থাকলে এটি করুন)')) {
                 db.collection('orders').doc(id).delete();
             }
+        }
+
+        /* ---------- SELLER / RESELLER CODES ---------- */
+        document.getElementById('addSellerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const code = document.getElementById('slCode').value.trim().toUpperCase();
+            const name = document.getElementById('slName').value.trim();
+            if (!code) return alert('একটি সেলার কোড দিন।');
+
+            db.collection('sellerCodes').doc(code).set({
+                name: name || '',
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert('সেলার কোড যোগ হয়েছে! এখন এই কোড যাকে দেবেন, সে পাইকারি মূল্য দেখতে পারবে।');
+                document.getElementById('addSellerForm').reset();
+            }).catch(err => {
+                console.error(err);
+                alert('কোড যোগ করতে সমস্যা হয়েছে।');
+            });
+        });
+
+        function loadSellerCodes() {
+            db.collection('sellerCodes').onSnapshot(snapshot => {
+                const list = document.getElementById('sellersList');
+                list.innerHTML = '';
+                if (snapshot.empty) {
+                    list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:15px; font-size:13px;">কোনো সেলার কোড যোগ করা হয়নি।</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const s = doc.data();
+                    const active = s.active !== false;
+                    const div = document.createElement('div');
+                    div.className = 'seller-item' + (active ? '' : ' seller-inactive');
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="seller-code-label">${doc.id}</span>
+                            ${s.name ? `<span style="font-size:12px; color:var(--text-dim);">${s.name}</span>` : ''}
+                        </div>
+                        <div class="actions">
+                            <button class="btn-stock ${active ? 'btn-in-stock' : 'btn-out-stock'}" onclick="toggleSellerCode('${doc.id}', ${active})">${active ? 'Active' : 'Inactive'}</button>
+                            <button class="btn-delete" onclick="deleteSellerCode('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function toggleSellerCode(code, currentStatus) {
+            db.collection('sellerCodes').doc(code).update({ active: !currentStatus });
+        }
+
+        function deleteSellerCode(code) {
+            if (confirm('সেলার কোডটি ডিলিট করতে চান?')) db.collection('sellerCodes').doc(code).delete();
         }
     </script>
 </body>
